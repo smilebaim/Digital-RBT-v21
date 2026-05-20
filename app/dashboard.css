@@ -86,10 +86,20 @@ main {
   z-index: 10 !important;
 }
 
+/*
+ * Leaflet memakai .leaflet-div-icon dengan background putih + border (leaflet.css).
+ * Tanpa override ini, setiap L.divIcon tampil sebagai kotak putih di sekitar ikon.
+ */
+.leaflet-marker-icon.leaflet-div-icon {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
 /* Custom Leaflet Marker Icons */
 .custom-div-icon {
-  background: transparent;
-  border: none;
+  background: transparent !important;
+  border: none !important;
 }
 
 .marker-icon {
@@ -102,6 +112,33 @@ main {
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
   font-size: 11px;
   color: white;
+  line-height: 1;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+/* Font Awesome di dalam marker (HTML Leaflet tidak selalu mewarisi kelas halaman) */
+.marker-icon--light {
+  color: #1f2937 !important;
+  border: 1px solid rgba(0, 0, 0, 0.28) !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18) !important;
+}
+
+.marker-icon--light .fa,
+.marker-icon--light .fas {
+  color: #1f2937 !important;
+}
+
+/* Font Awesome di dalam marker (HTML Leaflet tidak selalu mewarisi kelas halaman) */
+.marker-icon .fa,
+.marker-icon .fas,
+.marker-icon .far,
+.marker-icon .fab {
+  font-family: "Font Awesome 6 Free", "Font Awesome 6 Brands" !important;
+  font-style: normal !important;
+  font-weight: 900 !important;
+  line-height: 1 !important;
+  -webkit-font-smoothing: antialiased;
 }
 
 /* === Tab Styles === */

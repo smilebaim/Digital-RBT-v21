@@ -1991,9 +1991,17 @@ function clearMarkerClusterLayers() {
 }
 
 function createMarkerIcon(color, icon) {
+  const c = String(color).toLowerCase().trim();
+  const isLightBg =
+    c === '#ffffff' ||
+    c === '#fff' ||
+    c === '#e5e7eb' ||
+    c === 'white' ||
+    /^#f[0-9a-f]{5}$/.test(c) ||
+    /^#ff[0-9a-f]{4}$/i.test(c);
   return L.divIcon({
     className: 'custom-div-icon',
-    html: `<div class="marker-icon" style="background:${color}"><i class="fas ${icon}"></i></div>`,
+    html: `<div class="marker-icon${isLightBg ? ' marker-icon--light' : ''}" style="background:${color}"><i class="fas ${icon}"></i></div>`,
     iconSize: [24, 24],
     iconAnchor: [12, 24],
     popupAnchor: [0, -24],
