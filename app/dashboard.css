@@ -148,6 +148,11 @@ main {
 }
 
 /* === Tab Styles === */
+.dashboard-tab-bar {
+  border-bottom: 1px solid #e5e7eb;
+  box-shadow: none;
+}
+
 .tab-btn {
   transition: all 0.3s ease;
   position: relative;
@@ -159,7 +164,7 @@ main {
   bottom: 0;
   left: 50%;
   width: 0;
-  height: 3px;
+  height: 2px;
   background: #16a34a;
   transition: all 0.3s ease;
   transform: translateX(-50%);
@@ -172,6 +177,12 @@ main {
 .tab-btn.active {
   color: #16a34a;
   font-weight: 600;
+}
+
+/* === Footer === */
+.dashboard-footer {
+  background: var(--dashboard-bg);
+  border-top: 1px solid #e5e7eb;
 }
 
 /* === Menu Styles === */
