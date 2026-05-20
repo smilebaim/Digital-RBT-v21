@@ -65,29 +65,6 @@ function loadScript(src: string): Promise<void> {
 }
 
 async function loadDashboardScripts() {
-  await loadScript('https://cdn.tailwindcss.com/');
-  if (typeof (window as { tailwind?: unknown }).tailwind !== 'undefined') {
-    (window as { tailwind?: { config?: unknown } }).tailwind!.config = {
-      theme: {
-        extend: {
-          colors: {
-            primary: {
-              50: '#f0fdf4',
-              100: '#dcfce7',
-              200: '#bbf7d0',
-              300: '#86efac',
-              400: '#4ade80',
-              500: '#22c55e',
-              600: '#16a34a',
-              700: '#15803d',
-              800: '#166534',
-              900: '#14532d',
-            },
-          },
-        },
-      },
-    };
-  }
   await loadScript('https://unpkg.com/leaflet@1.9.4/dist/leaflet.js');
   await loadScript('https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js');
   await loadScript('https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js');
@@ -135,7 +112,7 @@ export default function DashboardClient() {
       'applyFilter', 'resetFilters', 'toggleLayer', 'toggleFaskesLayer',
       'togglePolygonLayer', 'applyCluster6Filter', 'changePolygonLevel',
       'searchPolygon', 'onBantuanFilterChange', 'renderBantuanTable',
-      'slideOrangHilang'
+      'slideOrangHilang', 'toggleMobileMenu', 'switchTabMobile', 'toggleLayerControl',
     ];
     stubs.forEach(fn => {
       if (typeof (window as any)[fn] !== 'function') {

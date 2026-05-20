@@ -30,23 +30,36 @@ export async function GET() {
       updated_at: new Date().toISOString(),
     }));
   });
-  let total_jiwa = 0, total_pengungsi = 0, total_titik_pengungsian = 0, total_rumah = 0, total_sawah = 0, total_fasum = 0, total_kebun = 0, total_tambak = 0;
-  
-  data.forEach(d => {
-    total_jiwa += (d.korban_meninggal + d.korban_luka + d.korban_hilang + d.pengungsi);
+  const enriched = data.map((d) => {
+    const jiwa_terdampak =
+      d.korban_meninggal + d.korban_luka + d.korban_hilang + d.pengungsi;
+    const rumah =
+      d.rumah_rusak_berat + d.rumah_rusak_sedang + d.rumah_rusak_ringan;
+    return { ...d, jiwa_terdampak, rumah };
+  });
+
+  let total_jiwa = 0,
+    total_pengungsi = 0,
+    total_titik_pengungsian = 0,
+    total_rumah = 0,
+    total_sawah = 0,
+    total_fasum = 0,
+    total_kebun = 0,
+    total_tambak = 0;
+
+  enriched.forEach((d) => {
+    total_jiwa += d.jiwa_terdampak;
     total_pengungsi += d.pengungsi;
     total_titik_pengungsian += 1;
-    total_rumah += (d.rumah_rusak_berat + d.rumah_rusak_sedang + d.rumah_rusak_ringan);
+    total_rumah += d.rumah;
     total_sawah += d.sawah_ha;
     total_fasum += d.fasum_rusak;
     total_kebun += d.kebun_ha;
     total_tambak += d.tambak_ha;
-    d.jiwa_terdampak = d.korban_meninggal + d.korban_luka + d.korban_hilang + d.pengungsi;
-    d.rumah = d.rumah_rusak_berat + d.rumah_rusak_sedang + d.rumah_rusak_ringan;
   });
 
-  return NextResponse.json({ 
-    data, 
+  return NextResponse.json({
+    data: enriched,
     total: data.length, 
     updated_at: new Date().toISOString(),
     total_jiwa,

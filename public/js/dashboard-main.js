@@ -1056,18 +1056,34 @@ async function loadAllData() {
 // =====================================================
 // TAB & MENU NAVIGATION
 // =====================================================
+function getKabupatenLabel(item) {
+  const name =
+    item?.kabupaten_kota ||
+    item?.kabkota ||
+    item?.kabupaten ||
+    item?.kotakab ||
+    '-';
+  return String(name).replace('KAB. ', '').replace('KOTA ', '');
+}
+
 async function switchTab(tabId) {
   // Update tab buttons
   document.querySelectorAll('.tab-btn').forEach((btn) => {
     btn.classList.remove('active');
   });
-  document.getElementById(`tab-${tabId}`).classList.add('active');
+  const tabBtn = document.getElementById(`tab-${tabId}`);
+  if (tabBtn) tabBtn.classList.add('active');
 
   // Update content
   document.querySelectorAll('.tab-content').forEach((content) => {
     content.classList.remove('active');
   });
-  document.getElementById(`content-${tabId}`).classList.add('active');
+  const tabContent = document.getElementById(`content-${tabId}`);
+  if (!tabContent) {
+    console.warn(`[switchTab] Unknown tab: ${tabId}`);
+    return;
+  }
+  tabContent.classList.add('active');
 
   state.currentTab = tabId;
 
@@ -1098,6 +1114,12 @@ async function switchTab(tabId) {
           break;
       }
     }
+
+    Object.values(state.maps).forEach((map) => {
+      if (map && typeof map.invalidateSize === 'function') {
+        map.invalidateSize();
+      }
+    });
   }, 100);
 }
 
@@ -1163,11 +1185,18 @@ function renderDampakTab() {
 
   // Initialize map
   initDampakMap();
+  addDampakBencanaMarkers();
 }
 
 function renderDampakCharts(data) {
+  if (typeof Chart === 'undefined') {
+    console.warn('[renderDampakCharts] Chart.js belum dimuat');
+    return;
+  }
+
   // Status Pie Chart
   const ctxStatus = document.getElementById('chartStatusDampak');
+  if (!ctxStatus) return;
   if (state.charts.statusDampak) state.charts.statusDampak.destroy();
 
   // Count status from data
@@ -1207,18 +1236,17 @@ function renderDampakCharts(data) {
 
   // Top Wilayah Bar Chart
   const ctxTop = document.getElementById('chartTopWilayah');
+  if (!ctxTop) return;
   if (state.charts.topWilayah) state.charts.topWilayah.destroy();
 
   const sorted = [...(data.data || [])]
-    .sort((a, b) => b.jiwa_terdampak - a.jiwa_terdampak)
+    .sort((a, b) => (b.jiwa_terdampak || 0) - (a.jiwa_terdampak || 0))
     .slice(0, 5);
 
   state.charts.topWilayah = new Chart(ctxTop, {
     type: 'bar',
     data: {
-      labels: sorted.map(
-        (d) => d.kabupaten?.replace('KAB. ', '').replace('KOTA ', '') || '-'
-      ),
+      labels: sorted.map((d) => getKabupatenLabel(d)),
       datasets: [
         {
           label: 'Korban',
@@ -1239,15 +1267,55 @@ function renderDampakCharts(data) {
   });
 }
 
+
+function addDampakBencanaMarkers() {
+  if (!state.maps.dampak || !state.data.bencana?.data) return;
+
+  if (!state.layers.bencanaPoints) {
+    state.layers.bencanaPoints = L.layerGroup().addTo(state.maps.dampak);
+  } else {
+    state.layers.bencanaPoints.clearLayers();
+  }
+
+  state.data.bencana.data.forEach((item) => {
+    const coords = getMarkerCoords(item);
+    if (!coords) return;
+
+    const icon = createMarkerIcon('#dc2626', 'fa-exclamation-triangle');
+    L.marker(coords, { icon })
+      .bindPopup(`
+        <div class="popup-header">
+          <strong><i class="fas fa-exclamation-triangle mr-2"></i>${item.jenis_bencana || 'Bencana'}</strong>
+        </div>
+        <div class="popup-body">
+          <p><strong>Wilayah:</strong> ${getWilayahNameForCoords(item) || '-'}</p>
+          <p><strong>Kecamatan:</strong> ${item.kecamatan || '-'}</p>
+          <p><strong>Desa:</strong> ${item.desa || '-'}</p>
+          <p><strong>Pengungsi:</strong> ${formatNumber(item.pengungsi || 0)}</p>
+          <p><strong>Status:</strong> ${item.status || '-'}</p>
+        </div>
+      `)
+      .addTo(state.layers.bencanaPoints);
+  });
+}
+
 function initDampakMap() {
-  if (state.maps.dampak) {
-    state.maps.dampak.invalidateSize();
-    // Refresh GeoJSON layer with updated data
-    refreshGeoJSONLayer(state.maps.dampak);
+  if (typeof L === 'undefined') {
+    console.warn('[initDampakMap] Leaflet belum dimuat');
     return;
   }
 
-  state.maps.dampak = L.map('map').setView(CONFIG.MAP_CENTER, CONFIG.MAP_ZOOM);
+  const mapEl = document.getElementById('map');
+  if (!mapEl) return;
+
+  if (state.maps.dampak) {
+    state.maps.dampak.invalidateSize();
+    refreshGeoJSONLayer(state.maps.dampak);
+    addDampakBencanaMarkers();
+    return;
+  }
+
+  state.maps.dampak = L.map(mapEl).setView(CONFIG.MAP_CENTER, CONFIG.MAP_ZOOM);
 
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; OpenStreetMap',
@@ -1571,7 +1639,7 @@ function focusMapOnCategory(category, cardElement) {
 
   // Collect coordinates based on category
   bencanaData.forEach((item) => {
-    const coords = getKabupatenCoords(item.kabupaten);
+    const coords = getBencanaMarkerCoords(item);
     if (!coords) return;
 
     let shouldInclude = false;
@@ -1879,6 +1947,49 @@ function toggleFaskesLayer() {
   }
 }
 
+const MARKER_CLUSTER_LAYER_KEYS = [
+  'puskesmas', 'rsud', 'fasyankes', 'banlog', 'jaringan', 'cluster6',
+  'posko', 'tenda', 'faspublik', 'village',
+];
+
+function getMarkerCoords(item) {
+  if (!item || typeof item !== 'object') return null;
+  const lat = parseFloat(item.latitude ?? item.lat ?? item.y ?? Number.NaN);
+  const lng = parseFloat(
+    item.longitude ?? item.lng ?? item.lon ?? item.long ?? item.x ?? Number.NaN
+  );
+  if (Number.isNaN(lat) || Number.isNaN(lng)) return null;
+  if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return null;
+  return [lat, lng];
+}
+
+function getWilayahNameForCoords(item) {
+  return (
+    item.kabupaten_kota || item.kabkota || item.kotakab || item.kabupaten ||
+    item.regency || item.nama_kabupaten || ''
+  );
+}
+
+function getBencanaMarkerCoords(item) {
+  return getMarkerCoords(item) || getKabupatenCoords(getWilayahNameForCoords(item));
+}
+
+function isFaskesOperational(status) {
+  if (!status) return false;
+  const s = String(status).toLowerCase();
+  return s === 'up' || s === 'aktif' || s === 'normal' || s === 'beroperasi' || s.includes('available');
+}
+
+function getBanlogStatusKey(item) {
+  return item.kategori || item.status || '';
+}
+
+function clearMarkerClusterLayers() {
+  MARKER_CLUSTER_LAYER_KEYS.forEach((key) => {
+    if (state.layers[key]?.clearLayers) state.layers[key].clearLayers();
+  });
+}
+
 function createMarkerIcon(color, icon) {
   return L.divIcon({
     className: 'custom-div-icon',
@@ -1899,13 +2010,17 @@ function addBanlogMarkers() {
     putih: '#ffffff',
   };
 
-  state.data.banlog.data.forEach((item) => {
-    if (!item.latitude || !item.longitude) return;
+  state.layers.banlog.clearLayers();
 
-    const color = colors[item.kategori] || '#6b7280';
+  state.data.banlog.data.forEach((item) => {
+    const coords = getMarkerCoords(item);
+    if (!coords) return;
+
+    const statusKey = getBanlogStatusKey(item);
+    const color = colors[statusKey] || '#6b7280';
     const icon = createMarkerIcon(color, 'fa-truck');
 
-    const marker = L.marker([item.latitude, item.longitude], { icon })
+    const marker = L.marker(coords, { icon })
       .bindPopup(`
                         <div class="popup-header">
                             <strong><i class="fas fa-truck mr-2"></i>Bantuan Logistik</strong>
@@ -1923,25 +2038,21 @@ function addBanlogMarkers() {
 }
 
 function addJaringanMarkers() {
-  if (!state.data.jaringan) return;
+  const items = state.data.jaringan?.data;
+  if (!Array.isArray(items) || items.length === 0) return;
 
-  // Get latest timestamp data
-  const timestamps = Object.keys(state.data.jaringan);
-  if (timestamps.length === 0) return;
+  state.layers.jaringan.clearLayers();
 
-  const latest = state.data.jaringan[timestamps[timestamps.length - 1]];
-  if (!latest?.regions) return;
-
-  latest.regions.forEach((region) => {
-    // Use approximate center coordinates for each kabupaten
-    // In real implementation, you'd have actual coordinates
-    const coords = getKabupatenCoords(region.name);
+  items.forEach((item) => {
+    const coords =
+      getMarkerCoords(item) || getKabupatenCoords(getWilayahNameForCoords(item));
     if (!coords) return;
 
+    const status = (item.status || 'normal').toLowerCase();
     const color =
-      region.status === 'critical'
+      status === 'critical'
         ? '#ef4444'
-        : region.status === 'warning'
+        : status === 'warning'
           ? '#f59e0b'
           : '#10b981';
     const icon = createMarkerIcon(color, 'fa-broadcast-tower');
@@ -1951,11 +2062,12 @@ function addJaringanMarkers() {
                             <strong><i class="fas fa-broadcast-tower mr-2"></i>Jaringan Telko</strong>
                         </div>
                         <div class="popup-body">
-                            <p><strong>Wilayah:</strong> ${region.name}</p>
-                            <p><strong>Transmission:</strong> ${region.transmission}</p>
-                            <p><strong>Power Failure:</strong> ${region.powerFailure}</p>
-                            <p><strong>Tower:</strong> ${region.tower}</p>
-                            <p><strong>Status:</strong> <span class="badge badge-${region.status === 'critical' ? 'critical' : region.status === 'warning' ? 'warning' : 'ok'}">${region.status}</span></p>
+                            <p><strong>Nama:</strong> ${item.nama || '-'}</p>
+                            <p><strong>Wilayah:</strong> ${getWilayahNameForCoords(item) || '-'}</p>
+                            <p><strong>Operator:</strong> ${item.operator || '-'}</p>
+                            <p><strong>Tipe:</strong> ${item.tipe || '-'}</p>
+                            <p><strong>Sinyal:</strong> ${item.signal_strength != null ? item.signal_strength + '%' : '-'}</p>
+                            <p><strong>Status:</strong> <span class="badge badge-${status === 'critical' ? 'critical' : status === 'warning' ? 'warning' : 'ok'}">${status}</span></p>
                         </div>
                     `);
 
@@ -1966,22 +2078,26 @@ function addJaringanMarkers() {
 function addPuskesmasMarkers() {
   if (!state.data.puskesmas?.data) return;
 
-  state.data.puskesmas.data.forEach((item) => {
-    if (!item.latitude || !item.longitude) return;
+  state.layers.puskesmas.clearLayers();
 
-    const color = item.status?.toLowerCase() === 'up' ? '#10b981' : '#ef4444';
+  state.data.puskesmas.data.forEach((item) => {
+    const coords = getMarkerCoords(item);
+    if (!coords) return;
+
+    const operational = isFaskesOperational(item.status);
+    const color = operational ? '#10b981' : '#ef4444';
     const icon = createMarkerIcon(color, 'fa-hospital');
 
-    const marker = L.marker([item.latitude, item.longitude], { icon })
+    const marker = L.marker(coords, { icon })
       .bindPopup(`
                         <div class="popup-header">
                             <strong><i class="fas fa-hospital mr-2"></i>Puskesmas</strong>
                         </div>
                         <div class="popup-body">
-                            <p><strong>Nama:</strong> ${item.puskes_name || '-'}</p>
-                            <p><strong>Kode:</strong> ${item.puskes_code || '-'}</p>
-                            <p><strong>Status:</strong> <span class="badge ${item.status?.toLowerCase() === 'up' ? 'badge-ok' : 'badge-critical'}">${item.status || '-'}</span></p>
-                            <p><strong>Jarak Tower:</strong> ${item.distance || '-'} m</p>
+                            <p><strong>Nama:</strong> ${item.nama || item.puskes_name || '-'}</p>
+                            <p><strong>Kode:</strong> ${item.id || item.puskes_code || '-'}</p>
+                            <p><strong>Wilayah:</strong> ${getWilayahNameForCoords(item) || '-'}</p>
+                            <p><strong>Status:</strong> <span class="badge ${operational ? 'badge-ok' : 'badge-critical'}">${item.status || '-'}</span></p>
                         </div>
                     `);
 
@@ -1992,20 +2108,24 @@ function addPuskesmasMarkers() {
 function addRSUDMarkers() {
   if (!state.data.rsud?.data) return;
 
-  state.data.rsud.data.forEach((item) => {
-    if (!item.latitude || !item.longitude) return;
+  state.layers.rsud.clearLayers();
 
-    const color = item.status?.toLowerCase() === 'up' ? '#3b82f6' : '#ef4444';
+  state.data.rsud.data.forEach((item) => {
+    const coords = getMarkerCoords(item);
+    if (!coords) return;
+
+    const operational = isFaskesOperational(item.status);
+    const color = operational ? '#3b82f6' : '#ef4444';
     const icon = createMarkerIcon(color, 'fa-hospital-alt');
 
-    const marker = L.marker([item.latitude, item.longitude], { icon })
-      .bindPopup(`
+    const marker = L.marker(coords, { icon }).bindPopup(`
                         <div class="popup-header">
                             <strong><i class="fas fa-hospital-alt mr-2"></i>RSUD</strong>
                         </div>
                         <div class="popup-body">
-                            <p><strong>Nama:</strong> ${item.rsu_name || '-'}</p>
-                            <p><strong>Status:</strong> <span class="badge ${item.status?.toLowerCase() === 'up' ? 'badge-ok' : 'badge-critical'}">${item.status || '-'}</span></p>
+                            <p><strong>Nama:</strong> ${item.nama || item.rsu_name || '-'}</p>
+                            <p><strong>Wilayah:</strong> ${getWilayahNameForCoords(item) || '-'}</p>
+                            <p><strong>Status:</strong> <span class="badge ${operational ? 'badge-ok' : 'badge-critical'}">${item.status || '-'}</span></p>
                         </div>
                     `);
 
@@ -2016,6 +2136,18 @@ function addRSUDMarkers() {
 // Get Fasyankes status color based on kondisi
 // Merah = Rusak Berat (RB), Kuning = Rusak Sedang (RS), Hijau = Aman, Biru = On Progress
 function getFasyankesStatusColor(item) {
+  const rawStatus = String(item.status || item.kondisi || '').toLowerCase();
+  if (rawStatus === 'terdampak' || rawStatus.includes('rusak')) {
+    return {
+      color: '#f59e0b',
+      status: 'Terdampak',
+      statusClass: 'bg-yellow-500',
+    };
+  }
+  if (rawStatus === 'aktif' || rawStatus === 'normal') {
+    return { color: '#10b981', status: 'Aman', statusClass: 'bg-green-500' };
+  }
+
   // Check for on-progress status first (highest priority)
   if (
     item.status_perbaikan === 'on_progress' ||
@@ -2089,16 +2221,18 @@ function addFasyankesV2Markers() {
   }
 
   state.data.fasyankesV2.data.forEach((item) => {
-    if (!item.latitude || !item.longitude) return;
+    const coords = getMarkerCoords(item);
+    if (!coords) return;
 
-    const isPuskesmas = item.jenis_fasyankes
-      ?.toLowerCase()
-      .includes('puskesmas');
+    const jenisLabel = item.jenis_fasyankes || item.tipe || '';
+    const isPuskesmas = jenisLabel.toLowerCase().includes('puskesmas');
     const iconClass = isPuskesmas ? 'fa-clinic-medical' : 'fa-hospital-user';
 
     // Get status color using 4-color system
     const statusInfo = getFasyankesStatusColor(item);
     const icon = createMarkerIcon(statusInfo.color, iconClass);
+    const namaLabel = item.nama_fasyankes || item.nama || 'Fasyankes';
+    const kabLabel = item.kab_kota || item.kabupaten_kota || '-';
 
     // Helper function for badge styling
     const getKondisiBadge = (kondisi, label) => {
@@ -2130,16 +2264,14 @@ function addFasyankesV2Markers() {
       return `<span class="px-2 py-0.5 bg-gray-100 text-gray-700 rounded text-xs">${status}</span>`;
     };
 
-    const marker = L.marker([item.latitude, item.longitude], {
-      icon,
-    }).bindPopup(
+    const marker = L.marker(coords, { icon }).bindPopup(
       `
                         <div class="popup-header" style="background: linear-gradient(135deg, ${statusInfo.color} 0%, ${statusInfo.color}dd 100%);">
                             <div class="flex items-center justify-between">
-                                <strong><i class="fas ${iconClass} mr-2"></i>${item.nama_fasyankes || 'Fasyankes'}</strong>
+                                <strong><i class="fas ${iconClass} mr-2"></i>${namaLabel}</strong>
                             </div>
                             <div class="flex items-center gap-2 mt-1">
-                                <span class="px-2 py-0.5 bg-white/20 rounded text-xs">${item.jenis_fasyankes || '-'}</span>
+                                <span class="px-2 py-0.5 bg-white/20 rounded text-xs">${jenisLabel || '-'}</span>
                                 <span class="px-2 py-0.5 bg-white/30 rounded text-xs font-semibold">${statusInfo.status}</span>
                             </div>
                         </div>
@@ -2309,10 +2441,9 @@ function addCluster6Markers(
 
   state.data.cluster6.forEach((item) => {
     // Skip if no coordinates
-    const lat = item.latitude;
-    const lng = item.longitude;
-
-    if (!lat || !lng) return;
+    const coords = getMarkerCoords(item);
+    if (!coords) return;
+    const [lat, lng] = coords;
 
     // Apply sektor filter
     if (filterSektor && item.sektor !== filterSektor) return;
@@ -2345,7 +2476,7 @@ function addCluster6Markers(
 
     // Determine color based on status kerusakan (RR=green, RS=yellow, RB=red)
     let color = '#6b7280'; // gray default (no status)
-    const statusKerusakan = (item.status_kerusakan || item.kondisi || '').toLowerCase();
+    const statusKerusakan = (item.status_kerusakan || item.kondisi || item.status || '').toLowerCase();
     if (statusKerusakan === 'rb' || statusKerusakan.includes('berat')) {
       color = '#ef4444'; // red
     } else if (statusKerusakan === 'rs' || statusKerusakan.includes('sedang')) {
@@ -2537,10 +2668,9 @@ function addPoskoMarkers() {
   state.layers.posko.clearLayers();
 
   state.data.posko.forEach((item) => {
-    const lat = parseFloat(item.latitude);
-    const lng = parseFloat(item.longitude);
-
-    if (!lat || !lng || isNaN(lat) || isNaN(lng)) return;
+    const coords = getMarkerCoords(item);
+    if (!coords) return;
+    const [lat, lng] = coords;
 
     const icon = createMarkerIcon('#6366f1', 'fa-campground');
 
@@ -2635,10 +2765,9 @@ function addTendaMarkers() {
   let totalUnit = 0;
 
   state.data.tenda.forEach((item) => {
-    const lat = parseFloat(item.latitude);
-    const lng = parseFloat(item.longitude);
-
-    if (!lat || !lng || isNaN(lat) || isNaN(lng)) return;
+    const coords = getMarkerCoords(item);
+    if (!coords) return;
+    const [lat, lng] = coords;
 
     const icon = createMarkerIcon('#d97706', 'fa-tents');
 
@@ -2715,10 +2844,9 @@ function addFasilitasPublikMarkers() {
   const byType = {};
 
   state.data.fasilitasPublik.forEach((item) => {
-    const lat = parseFloat(item.latitude);
-    const lng = parseFloat(item.longitude);
-
-    if (!lat || !lng || isNaN(lat) || isNaN(lng)) return;
+    const coords = getMarkerCoords(item);
+    if (!coords) return;
+    const [lat, lng] = coords;
 
     // Count by type
     const facilityType = item.facilityType || item.jenis || item.type || 'Lainnya';
@@ -2852,10 +2980,9 @@ function addVillageDistributionMarkers() {
   const byRegency = {};
 
   state.data.villageDistribution.forEach((item) => {
-    const lat = parseFloat(item.latitude);
-    const lng = parseFloat(item.longitude);
-
-    if (!lat || !lng || isNaN(lat) || isNaN(lng)) return;
+    const coords = getMarkerCoords(item);
+    if (!coords) return;
+    const [lat, lng] = coords;
 
     // Count by regency
     const regency = item.regency || item.kabupaten || 'Unknown';
@@ -2984,8 +3111,7 @@ function toggleLayer(layerName) {
 }
 
 function refreshAllLayers() {
-  // Clear and re-add markers
-  Object.values(state.layers).forEach((layer) => layer.clearLayers());
+  clearMarkerClusterLayers();
   addBanlogMarkers();
   addJaringanMarkers();
   addPuskesmasMarkers();
@@ -3042,27 +3168,17 @@ function updateLayerStats() {
   }
 
   // Jaringan count
-  const timestamps = Object.keys(state.data.jaringan || {});
-  if (timestamps.length > 0) {
-    const latest = state.data.jaringan[timestamps[timestamps.length - 1]];
-    document.getElementById('stat-jaringan').textContent =
-      latest?.regions?.length || 0;
-  }
+  const jaringanCount = state.data.jaringan?.summary?.total || state.data.jaringan?.data?.length || 0;
+  document.getElementById('stat-jaringan').textContent = jaringanCount;
 }
 
 function updateJaringanStatus() {
-  const timestamps = Object.keys(state.data.jaringan || {});
-  if (timestamps.length === 0) return;
+  const summary = state.data.jaringan?.summary;
+  if (!summary) return;
 
-  const latest = state.data.jaringan[timestamps[timestamps.length - 1]];
-  if (!latest?.summary) return;
-
-  document.getElementById('jaringan-critical').textContent =
-    latest.summary.criticalRegions || 0;
-  document.getElementById('jaringan-warning').textContent =
-    latest.summary.warningRegions || 0;
-  document.getElementById('jaringan-normal').textContent =
-    latest.summary.normalRegions || 0;
+  document.getElementById('jaringan-critical').textContent = summary.critical || 0;
+  document.getElementById('jaringan-warning').textContent = summary.warning || 0;
+  document.getElementById('jaringan-normal').textContent = summary.normal || 0;
 }
 
 function populateFilterKabupaten() {
@@ -3658,24 +3774,23 @@ function addBanlogMarkersFiltered(kabFilter, statusFilter) {
   };
 
   state.data.banlog.data.forEach((item) => {
-    if (!item.latitude || !item.longitude) return;
+    const coords = getMarkerCoords(item);
+    if (!coords) return;
+    if (!matchesKabupatenFilter(getWilayahNameForCoords(item), kabFilter)) return;
 
-    // Apply kabupaten filter (using normalized matching)
-    if (!matchesKabupatenFilter(item.kabupaten, kabFilter)) return;
-
-    const color = colors[item.kategori] || '#6b7280';
+    const statusKey = getBanlogStatusKey(item);
+    const color = colors[statusKey] || '#6b7280';
     const icon = createMarkerIcon(color, 'fa-truck');
 
-    const marker = L.marker([item.latitude, item.longitude], { icon })
-      .bindPopup(`
+    const marker = L.marker(coords, { icon }).bindPopup(`
                         <div class="popup-header">
                             <strong><i class="fas fa-truck mr-2"></i>Bantuan Logistik</strong>
                         </div>
                         <div class="popup-body">
                             <p><strong>Desa:</strong> ${item.desa || '-'}</p>
                             <p><strong>Kecamatan:</strong> ${item.kecamatan || '-'}</p>
-                            <p><strong>Kabupaten:</strong> ${item.kabupaten || '-'}</p>
-                            <p><strong>Status:</strong> ${item.kategori || '-'}</p>
+                            <p><strong>Kabupaten:</strong> ${getWilayahNameForCoords(item) || '-'}</p>
+                            <p><strong>Status:</strong> ${statusKey || '-'}</p>
                         </div>
                     `);
 
@@ -3684,28 +3799,22 @@ function addBanlogMarkersFiltered(kabFilter, statusFilter) {
 }
 
 function addJaringanMarkersFiltered(kabFilter, statusFilter) {
-  if (!state.data.jaringan) return;
+  const items = state.data.jaringan?.data;
+  if (!Array.isArray(items) || items.length === 0) return;
 
-  const timestamps = Object.keys(state.data.jaringan);
-  if (timestamps.length === 0) return;
-
-  const latest = state.data.jaringan[timestamps[timestamps.length - 1]];
-  if (!latest?.regions) return;
-
-  latest.regions.forEach((region) => {
-    const coords = getKabupatenCoords(region.name);
+  items.forEach((item) => {
+    const coords =
+      getMarkerCoords(item) || getKabupatenCoords(getWilayahNameForCoords(item));
     if (!coords) return;
+    if (!matchesKabupatenFilter(getWilayahNameForCoords(item), kabFilter)) return;
 
-    // Apply kabupaten filter (using normalized matching)
-    if (!matchesKabupatenFilter(region.name, kabFilter)) return;
-
-    // Apply status filter
-    if (statusFilter && region.status !== statusFilter) return;
+    const status = (item.status || 'normal').toLowerCase();
+    if (statusFilter && status !== statusFilter) return;
 
     const color =
-      region.status === 'critical'
+      status === 'critical'
         ? '#ef4444'
-        : region.status === 'warning'
+        : status === 'warning'
           ? '#f59e0b'
           : '#10b981';
     const icon = createMarkerIcon(color, 'fa-broadcast-tower');
@@ -3715,11 +3824,10 @@ function addJaringanMarkersFiltered(kabFilter, statusFilter) {
                             <strong><i class="fas fa-broadcast-tower mr-2"></i>Jaringan Telko</strong>
                         </div>
                         <div class="popup-body">
-                            <p><strong>Wilayah:</strong> ${region.name}</p>
-                            <p><strong>Transmission:</strong> ${region.transmission}</p>
-                            <p><strong>Power Failure:</strong> ${region.powerFailure}</p>
-                            <p><strong>Tower:</strong> ${region.tower}</p>
-                            <p><strong>Status:</strong> <span class="badge badge-${region.status === 'critical' ? 'critical' : region.status === 'warning' ? 'warning' : 'ok'}">${region.status}</span></p>
+                            <p><strong>Nama:</strong> ${item.nama || '-'}</p>
+                            <p><strong>Wilayah:</strong> ${getWilayahNameForCoords(item) || '-'}</p>
+                            <p><strong>Operator:</strong> ${item.operator || '-'}</p>
+                            <p><strong>Status:</strong> ${status}</p>
                         </div>
                     `);
 
@@ -3731,26 +3839,25 @@ function addPuskesmasMarkersFiltered(kabFilter, statusFilter) {
   if (!state.data.puskesmas?.data) return;
 
   state.data.puskesmas.data.forEach((item) => {
-    if (!item.latitude || !item.longitude) return;
+    const coords = getMarkerCoords(item);
+    if (!coords) return;
+    if (!matchesKabupatenFilter(getWilayahNameForCoords(item), kabFilter)) return;
 
-    // Determine status for filtering
-    const itemStatus =
-      item.status?.toLowerCase() === 'up' ? 'normal' : 'critical';
+    const operational = isFaskesOperational(item.status);
+    const itemStatus = operational ? 'normal' : 'critical';
     if (statusFilter && itemStatus !== statusFilter) return;
 
-    const color = item.status?.toLowerCase() === 'up' ? '#10b981' : '#ef4444';
+    const color = operational ? '#10b981' : '#ef4444';
     const icon = createMarkerIcon(color, 'fa-hospital');
 
-    const marker = L.marker([item.latitude, item.longitude], { icon })
-      .bindPopup(`
+    const marker = L.marker(coords, { icon }).bindPopup(`
                         <div class="popup-header">
                             <strong><i class="fas fa-hospital mr-2"></i>Puskesmas</strong>
                         </div>
                         <div class="popup-body">
-                            <p><strong>Nama:</strong> ${item.puskes_name || '-'}</p>
-                            <p><strong>Kode:</strong> ${item.puskes_code || '-'}</p>
-                            <p><strong>Status:</strong> <span class="badge ${item.status?.toLowerCase() === 'up' ? 'badge-ok' : 'badge-critical'}">${item.status || '-'}</span></p>
-                            <p><strong>Jarak Tower:</strong> ${item.distance || '-'} m</p>
+                            <p><strong>Nama:</strong> ${item.nama || item.puskes_name || '-'}</p>
+                            <p><strong>Wilayah:</strong> ${getWilayahNameForCoords(item) || '-'}</p>
+                            <p><strong>Status:</strong> ${item.status || '-'}</p>
                         </div>
                     `);
 
@@ -3762,24 +3869,24 @@ function addRSUDMarkersFiltered(kabFilter, statusFilter) {
   if (!state.data.rsud?.data) return;
 
   state.data.rsud.data.forEach((item) => {
-    if (!item.latitude || !item.longitude) return;
+    const coords = getMarkerCoords(item);
+    if (!coords) return;
+    if (!matchesKabupatenFilter(getWilayahNameForCoords(item), kabFilter)) return;
 
-    // Determine status for filtering
-    const itemStatus =
-      item.status?.toLowerCase() === 'up' ? 'normal' : 'critical';
+    const operational = isFaskesOperational(item.status);
+    const itemStatus = operational ? 'normal' : 'critical';
     if (statusFilter && itemStatus !== statusFilter) return;
 
-    const color = item.status?.toLowerCase() === 'up' ? '#3b82f6' : '#ef4444';
+    const color = operational ? '#3b82f6' : '#ef4444';
     const icon = createMarkerIcon(color, 'fa-hospital-alt');
 
-    const marker = L.marker([item.latitude, item.longitude], { icon })
-      .bindPopup(`
+    const marker = L.marker(coords, { icon }).bindPopup(`
                         <div class="popup-header">
                             <strong><i class="fas fa-hospital-alt mr-2"></i>RSUD</strong>
                         </div>
                         <div class="popup-body">
-                            <p><strong>Nama:</strong> ${item.rsu_name || '-'}</p>
-                            <p><strong>Status:</strong> <span class="badge ${item.status?.toLowerCase() === 'up' ? 'badge-ok' : 'badge-critical'}">${item.status || '-'}</span></p>
+                            <p><strong>Nama:</strong> ${item.nama || item.rsu_name || '-'}</p>
+                            <p><strong>Status:</strong> ${item.status || '-'}</p>
                         </div>
                     `);
 
@@ -3791,103 +3898,36 @@ function addFasyankesV2MarkersFiltered(kabFilter, statusFilter) {
   if (!state.data.fasyankesV2?.data) return;
 
   state.data.fasyankesV2.data.forEach((item) => {
-    if (!item.latitude || !item.longitude) return;
+    const coords = getMarkerCoords(item);
+    if (!coords) return;
 
-    // Apply kabupaten filter (using normalized matching)
-    if (!matchesKabupatenFilter(item.kab_kota, kabFilter)) return;
+    const kabName = item.kab_kota || item.kabupaten_kota || getWilayahNameForCoords(item);
+    if (!matchesKabupatenFilter(kabName, kabFilter)) return;
 
-    // Get status info and apply filter
     const statusInfo = getFasyankesStatusColor(item);
     const itemStatus =
       statusInfo.status === 'Rusak Berat'
         ? 'critical'
-        : statusInfo.status === 'Rusak Sedang' ||
-            statusInfo.status === 'Rusak Ringan'
+        : statusInfo.status === 'Rusak Sedang' || statusInfo.status === 'Rusak Ringan'
           ? 'warning'
           : 'normal';
     if (statusFilter && itemStatus !== statusFilter) return;
 
-    const isPuskesmas = item.jenis_fasyankes
-      ?.toLowerCase()
-      .includes('puskesmas');
+    const jenis = item.jenis_fasyankes || item.tipe || '';
+    const isPuskesmas = jenis.toLowerCase().includes('puskesmas');
     const iconClass = isPuskesmas ? 'fa-clinic-medical' : 'fa-hospital-user';
     const icon = createMarkerIcon(statusInfo.color, iconClass);
 
-    const getKondisiBadge = (kondisi, label) => {
-      if (!kondisi || kondisi === '-' || kondisi === '0' || kondisi === '') {
-        return `<span class="inline-block px-2 py-1 bg-gray-100 text-gray-500 rounded text-xs">${label}: -</span>`;
-      }
-      const colors = {
-        RR: 'bg-orange-100 text-orange-700',
-        RS: 'bg-yellow-100 text-yellow-700',
-        RB: 'bg-red-100 text-red-700',
-      };
-      return `<span class="inline-block px-2 py-1 ${colors[label] || 'bg-gray-100 text-gray-700'} rounded text-xs">${label}: ${kondisi}</span>`;
-    };
-
-    const getNetworkBadge = (status) => {
-      if (!status || status === '-')
-        return '<span class="text-gray-400">-</span>';
-      const s = status.toLowerCase();
-      if (s.includes('available') || s.includes('ada') || s.includes('aktif')) {
-        return `<span class="px-2 py-0.5 bg-green-100 text-green-700 rounded text-xs">${status}</span>`;
-      } else if (
-        s.includes('tidak') ||
-        s.includes('down') ||
-        s.includes('off')
-      ) {
-        return `<span class="px-2 py-0.5 bg-red-100 text-red-700 rounded text-xs">${status}</span>`;
-      }
-      return `<span class="px-2 py-0.5 bg-gray-100 text-gray-700 rounded text-xs">${status}</span>`;
-    };
-
-    const marker = L.marker([item.latitude, item.longitude], {
-      icon,
-    }).bindPopup(
-      `
+    const marker = L.marker(coords, { icon }).bindPopup(`
                         <div class="popup-header" style="background: linear-gradient(135deg, ${statusInfo.color} 0%, ${statusInfo.color}dd 100%);">
-                            <div class="flex items-center justify-between">
-                                <strong><i class="fas ${iconClass} mr-2"></i>${item.nama_fasyankes || 'Fasyankes'}</strong>
-                            </div>
-                            <div class="flex items-center gap-2 mt-1">
-                                <span class="px-2 py-0.5 bg-white/20 rounded text-xs">${item.jenis_fasyankes || '-'}</span>
-                                <span class="px-2 py-0.5 bg-white/30 rounded text-xs font-semibold">${statusInfo.status}</span>
-                            </div>
+                            <strong><i class="fas ${iconClass} mr-2"></i>${item.nama_fasyankes || item.nama || 'Fasyankes'}</strong>
+                            <div class="text-xs mt-1">${jenis || '-'} · ${statusInfo.status}</div>
                         </div>
-                        <div class="popup-body" style="min-width: 280px;">
-                            <div class="grid grid-cols-2 gap-2 mb-3">
-                                <div>
-                                    <span class="text-xs text-gray-500">Kab/Kota</span>
-                                    <div class="font-medium text-sm">${item.kab_kota || '-'}</div>
-                                </div>
-                                <div>
-                                    <span class="text-xs text-gray-500">Operasional</span>
-                                    <div class="font-medium text-sm">${item.aktif_operasional || '-'}</div>
-                                </div>
-                            </div>
-                            <div class="mb-3 p-2 bg-gray-50 rounded-lg">
-                                <h4 class="text-xs font-semibold text-gray-600 mb-2"><i class="fas fa-building mr-1"></i>Kondisi</h4>
-                                <div class="flex flex-wrap gap-1">
-                                    ${getKondisiBadge(item.kondisi_rr, 'RR')}
-                                    ${getKondisiBadge(item.kondisi_rs, 'RS')}
-                                    ${getKondisiBadge(item.kondisi_rb, 'RB')}
-                                </div>
-                            </div>
-                            ${
-                              item.link_maps
-                                ? `
-                            <div class="text-center pt-2 border-t">
-                                <a href="${item.link_maps}" target="_blank" class="text-blue-500 hover:text-blue-700 text-sm">
-                                    <i class="fas fa-external-link-alt mr-1"></i>Buka di Google Maps
-                                </a>
-                            </div>
-                            `
-                                : ''
-                            }
+                        <div class="popup-body">
+                            <p><strong>Kab/Kota:</strong> ${kabName || '-'}</p>
+                            <p><strong>Status:</strong> ${item.status || '-'}</p>
                         </div>
-                    `,
-      { maxWidth: 320 }
-    );
+                    `, { maxWidth: 320 });
 
     state.layers.fasyankes.addLayer(marker);
   });
@@ -4235,7 +4275,7 @@ function initPengungsiMap() {
   // Add pengungsi markers from bencana data
   if (state.data.bencana?.data) {
     state.data.bencana.data.forEach((item) => {
-      const coords = getKabupatenCoords(item.kabupaten);
+      const coords = getBencanaMarkerCoords(item);
       if (!coords || !item.pengungsi) return;
 
       const icon = createMarkerIcon('#8b5cf6', 'fa-users');
@@ -4246,7 +4286,7 @@ function initPengungsiMap() {
                                 <strong><i class="fas fa-users mr-2"></i>Pengungsi</strong>
                             </div>
                             <div class="popup-body">
-                                <p><strong>Kabupaten:</strong> ${item.kabupaten}</p>
+                                <p><strong>Kabupaten:</strong> ${getWilayahNameForCoords(item)}</p>
                                 <p><strong>Pengungsi:</strong> ${formatNumber(item.pengungsi)}</p>
                                 <p><strong>Titik:</strong> ${formatNumber(item.titik_pengungsian)}</p>
                             </div>
@@ -4468,12 +4508,14 @@ function initBantuanMap() {
   };
 
   state.data.banlog?.data?.forEach((item) => {
-    if (!item.latitude || !item.longitude) return;
+    const coords = getMarkerCoords(item);
+    if (!coords) return;
 
-    const color = colors[item.kategori] || '#6b7280';
+    const statusKey = getBanlogStatusKey(item);
+    const color = colors[statusKey] || '#6b7280';
     const icon = createMarkerIcon(color, 'fa-box');
 
-    L.marker([item.latitude, item.longitude], { icon })
+    L.marker(coords, { icon })
       .bindPopup(
         `
                         <div class="popup-header">
@@ -5611,7 +5653,7 @@ async function selectPolygonSearchResult(index) {
       .openOn(state.maps.operasi);
 
     // Load breakdown data for the popup
-    setTimeout(() => loadPolygonBreakdown(kode), 100);
+    setTimeout(() => loadPolygonBreakdown(item.kode), 100);
 
     // Remove highlight after 5 seconds
     setTimeout(() => {
@@ -5802,6 +5844,51 @@ async function preloadOtherTabs() {
   console.log('[Preload] Background preload complete');
 }
 
+// Mobile menu & layer panel (inline onclick — scripts in HTML are not executed by React)
+function toggleMobileMenu() {
+  const overlay = document.getElementById('mobileMenuOverlay');
+  const drawer = document.getElementById('mobileMenuDrawer');
+  if (!overlay || !drawer) return;
+  overlay.classList.toggle('active');
+  drawer.classList.toggle('active');
+  document.body.style.overflow = drawer.classList.contains('active') ? 'hidden' : '';
+}
+
+function switchTabMobile(tabId) {
+  document.querySelectorAll('.mobile-menu-item').forEach((item) => {
+    item.classList.remove('active');
+  });
+  const target = event?.target?.closest?.('.mobile-menu-item');
+  if (target) target.classList.add('active');
+  if (typeof switchTab === 'function') {
+    void switchTab(tabId);
+  }
+  toggleMobileMenu();
+}
+
+function toggleLayerControl() {
+  const content = document.getElementById('layer-control-content');
+  const icon = document.getElementById('layer-control-icon');
+  if (!content || !icon) return;
+  if (content.classList.contains('expanded')) {
+    content.classList.remove('expanded');
+    icon.classList.remove('fa-chevron-up');
+    icon.classList.add('fa-chevron-down');
+  } else {
+    content.classList.add('expanded');
+    icon.classList.remove('fa-chevron-down');
+    icon.classList.add('fa-chevron-up');
+  }
+}
+
+function syncLastUpdateMobile() {
+  const desktop = document.getElementById('lastUpdate');
+  const mobile = document.getElementById('lastUpdateMobile');
+  if (desktop && mobile) {
+    mobile.textContent = desktop.textContent;
+  }
+}
+
 // Expose handlers for inline HTML attributes (onclick/onchange)
 Object.assign(window, {
   switchTab,
@@ -5821,8 +5908,32 @@ Object.assign(window, {
   renderBantuanTable,
   slideOrangHilang,
   changeDampakPolygonLevel,
+  toggleMobileMenu,
+  switchTabMobile,
+  toggleLayerControl,
 });
 window.__dashboardMainReady = true;
+
+// Sync mobile "last update" label with desktop header
+(function setupLastUpdateSync() {
+  const desktop = document.getElementById('lastUpdate');
+  if (!desktop) return;
+  syncLastUpdateMobile();
+  const observer = new MutationObserver(syncLastUpdateMobile);
+  observer.observe(desktop, { childList: true, characterData: true, subtree: true });
+})();
+
+window.addEventListener('resize', () => {
+  if (window.innerWidth >= 768) {
+    const overlay = document.getElementById('mobileMenuOverlay');
+    const drawer = document.getElementById('mobileMenuDrawer');
+    if (drawer?.classList.contains('active')) {
+      overlay?.classList.remove('active');
+      drawer.classList.remove('active');
+      document.body.style.overflow = '';
+    }
+  }
+});
 
 // Start the application
 if (document.readyState === 'loading') {
