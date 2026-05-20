@@ -5800,51 +5800,21 @@ async function refreshAllTabsData() {
   isRefreshing = false;
 }
 
-function getKontrolSettings() {
-  try {
-    const raw = localStorage.getItem('desadigital-kontrol-settings');
-    if (!raw) return null;
-    return JSON.parse(raw);
-  } catch (e) {
-    console.warn('[Init] Invalid kontrol settings:', e);
-    return null;
-  }
-}
-
 async function init() {
-  // Performance: measure load time
   const startTime = performance.now();
-  const kontrolSettings = getKontrolSettings();
-  const initialTab = kontrolSettings?.defaultPublicTab || 'dampak';
+  const initialTab = state.currentTab || 'dampak';
 
-  // Log cache stats
   console.log('[Init] LocalStorage cache stats:', localCache.stats());
 
-  // OPTIMIZED: Only load data for the initial tab
-  // Other tabs will be loaded on demand when user switches to them
   await loadTabData(initialTab);
-
-  // Initialize first tab (respects panel kontrol default)
   await switchTab(initialTab);
 
   const loadTime = ((performance.now() - startTime) / 1000).toFixed(2);
   console.log(`[Init] Dashboard loaded in ${loadTime}s (lazy loading enabled)`);
 
-  // Background preload other tabs after initial render (non-blocking)
-  // This improves UX by having data ready when user switches tabs
   setTimeout(() => {
     preloadOtherTabs();
-  }, 2000); // Wait 2 seconds after initial load
-
-  const refreshMinutes = kontrolSettings?.autoRefreshMinutes;
-  if (refreshMinutes && refreshMinutes > 0) {
-    const intervalMs = refreshMinutes * 60 * 1000;
-    setInterval(async () => {
-      console.log('[Init] Auto-refresh from panel kontrol');
-      await refreshAllTabsData();
-    }, intervalMs);
-    console.log(`[Init] Auto-refresh setiap ${refreshMinutes} menit`);
-  }
+  }, 2000);
 }
 
 /**
