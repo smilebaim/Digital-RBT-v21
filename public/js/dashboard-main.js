@@ -1328,8 +1328,8 @@ function initDampakMap() {
   // Add area level filter control inside the map
   addDampakFilterControl(state.maps.dampak);
 
-  // Load polygon GeoJSON with combined bencana data
-  loadDampakPolygonGeoJSON(state.maps.dampak);
+  // Batas wilayah: GeoJSON administratif (bukan poligon kotak dummy)
+  loadGeoJSON(state.maps.dampak);
 }
 
 // Add filter control for Dampak map (area level selection)
@@ -1375,7 +1375,9 @@ async function changeDampakPolygonLevel(level) {
   if (countEl) countEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
 
   // Reload polygon data
-  await loadDampakPolygonGeoJSON(state.maps.dampak);
+  if (state.maps.dampak) {
+    refreshGeoJSONLayer(state.maps.dampak);
+  }
 }
 
 // Load polygon GeoJSON for Dampak tab with combined bencana data
@@ -1390,10 +1392,19 @@ async function loadDampakPolygonGeoJSON(map) {
 
     if (!result || !result.polygons) {
       console.warn('No polygon data received for Dampak tab');
+      loadGeoJSON(map);
       return;
     }
 
-    console.log('Polygon loaded:', result.polygons.features?.length || 0, 'features');
+    const features = filterNonBoxPolygonFeatures(result.polygons.features || []);
+    if (features.length === 0) {
+      console.log('No valid polygon features (dummy boxes skipped), using administrative GeoJSON');
+      loadGeoJSON(map);
+      return;
+    }
+
+    result.polygons = { ...result.polygons, features };
+    console.log('Polygon loaded:', features.length, 'features');
 
     // Remove existing layer if any
     if (state.layers.dampakPolygon) {
@@ -1899,22 +1910,10 @@ function initPetaOperasiMap() {
     }
   });
 
-  // Load GeoJSON boundaries
+  // Batas wilayah administratif (bukan poligon kotak dummy)
   loadGeoJSON(state.maps.operasi);
 
-  // Add polygon legend (hidden by default, shown when polygon layer is active)
   addPolygonLegend(state.maps.operasi);
-
-  // Initialize and add polygon layer by default (first layer so it's behind markers)
-  initPolygonLayer(state.maps.operasi).then(() => {
-    // Add polygon layer to map if it exists
-    if (polygonState.layer) {
-      state.maps.operasi.addLayer(polygonState.layer);
-      // Show polygon legend
-      const legend = document.getElementById('polygon-legend-content');
-      if (legend) legend.style.display = 'block';
-    }
-  });
 
   // Add markers to all layers
   addBanlogMarkers();
@@ -5026,11 +5025,9 @@ async function loadGeoJSON(map) {
 
 // Refresh GeoJSON layer style and popups with updated bencana data
 function refreshGeoJSONLayer(map) {
-  // Check if we're using the new dampak polygon layer
   if (state.layers.dampakPolygon && map === state.maps.dampak) {
-    // Refresh the dampak polygon layer
-    refreshDampakPolygonLayer(map);
-    return;
+    map.removeLayer(state.layers.dampakPolygon);
+    state.layers.dampakPolygon = null;
   }
 
   if (!state.layers.geojson) {
@@ -5156,6 +5153,34 @@ function getKabupatenCoords(name) {
 // WILAYAH POLYGON LAYER (CHOROPLETH)
 // =====================================================
 
+/** Poligon dummy berbentuk kotak (5 titik, 4 sisi sama) dari API lama */
+function isBoxPolygonCoordinates(coords) {
+  const ring = coords?.[0];
+  if (!Array.isArray(ring) || ring.length !== 5) return false;
+  const [p0, p1, p2, p3, p4] = ring;
+  if (!p0 || !p4 || p0[0] !== p4[0] || p0[1] !== p4[1]) return false;
+
+  const lngs = [p0[0], p1[0], p2[0], p3[0]];
+  const lats = [p0[1], p1[1], p2[1], p3[1]];
+  const uniqLng = new Set(lngs.map((v) => v.toFixed(5))).size;
+  const uniqLat = new Set(lats.map((v) => v.toFixed(5))).size;
+  return uniqLng === 2 && uniqLat === 2;
+}
+
+function isBoxPolygonFeature(feature) {
+  const geom = feature?.geometry;
+  if (!geom) return false;
+  if (geom.type === 'Polygon') return isBoxPolygonCoordinates(geom.coordinates);
+  if (geom.type === 'MultiPolygon') {
+    return geom.coordinates?.every((poly) => isBoxPolygonCoordinates(poly));
+  }
+  return false;
+}
+
+function filterNonBoxPolygonFeatures(features) {
+  return (features || []).filter((f) => !isBoxPolygonFeature(f));
+}
+
 // Polygon state
 const polygonState = {
   level: 2, // Default to kabkota level
@@ -5245,12 +5270,19 @@ async function initPolygonLayer(map) {
       parent: polygonState.parentKode
     });
 
-    // Backend returns { polygons, points, summary }
     if (!result || !result.polygons) {
       console.warn('No polygon data received');
       return;
     }
 
+    const features = filterNonBoxPolygonFeatures(result.polygons.features || []);
+    if (features.length === 0) {
+      console.warn('No valid polygon features (dummy boxes skipped)');
+      updatePolygonStats({ polygons: { features: [] } });
+      return;
+    }
+
+    result.polygons = { ...result.polygons, features };
     polygonState.data = result;
 
     // Remove existing layer if any
@@ -5631,42 +5663,40 @@ async function selectPolygonSearchResult(index) {
   // Search result doesn't include geometry, need to fetch the full polygon detail
   try {
     const detailResult = await api.getPolygonDetail(item.kode);
-    if (!detailResult || !detailResult.data || !detailResult.data.geometry) {
-      console.warn('Could not fetch polygon geometry for:', item.kode);
-      showToast('Tidak dapat memuat polygon', 'warning');
+    const polygonData = detailResult?.data;
+    if (!polygonData?.properties) {
+      console.warn('Could not fetch wilayah detail for:', item.kode);
+      showToast('Tidak dapat memuat data wilayah', 'warning');
       return;
     }
 
-    const polygonData = detailResult.data;
+    const center = polygonData.center;
+    if (!center?.lat || !center?.lng) {
+      showToast('Koordinat wilayah tidak tersedia', 'warning');
+      return;
+    }
 
-    // Create temporary highlight layer
-    const highlightLayer = L.geoJSON(polygonData.geometry, {
-      style: {
-        color: '#1d4ed8',
-        weight: 4,
-        fillColor: '#3b82f6',
-        fillOpacity: 0.4
-      }
+    const latlng = L.latLng(center.lat, center.lng);
+    state.maps.operasi.flyTo(latlng, 10, { duration: 0.8 });
+
+    const marker = L.circleMarker(latlng, {
+      radius: 10,
+      color: '#1d4ed8',
+      weight: 3,
+      fillColor: '#3b82f6',
+      fillOpacity: 0.5,
     }).addTo(state.maps.operasi);
 
-    // Zoom to bounds
-    const bounds = highlightLayer.getBounds();
-    state.maps.operasi.fitBounds(bounds, { padding: [50, 50] });
-
-    // Show popup with info from the detail response
-    const center = bounds.getCenter();
     L.popup({ maxWidth: 600, minWidth: 400, className: 'polygon-popup' })
-      .setLatLng(center)
+      .setLatLng(latlng)
       .setContent(createPolygonPopup(polygonData.properties))
       .openOn(state.maps.operasi);
 
-    // Load breakdown data for the popup
     setTimeout(() => loadPolygonBreakdown(item.kode), 100);
 
-    // Remove highlight after 5 seconds
     setTimeout(() => {
-      if (state.maps.operasi.hasLayer(highlightLayer)) {
-        state.maps.operasi.removeLayer(highlightLayer);
+      if (state.maps.operasi.hasLayer(marker)) {
+        state.maps.operasi.removeLayer(marker);
       }
     }, 5000);
 

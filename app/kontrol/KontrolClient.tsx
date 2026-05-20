@@ -547,10 +547,10 @@ export default function KontrolClient() {
                         }))
                       }
                     >
-                      <option value="dampak">Dampak</option>
-                      <option value="peta-operasi">Peta Operasi</option>
-                      <option value="pengungsi">Pengungsi</option>
-                      <option value="bantuan">Bantuan</option>
+                      <option value="dampak">Profil</option>
+                      <option value="peta-operasi">Tata Ruang</option>
+                      <option value="pengungsi">Pembangunan</option>
+                      <option value="bantuan">Indeks</option>
                     </select>
                   </label>
 
