@@ -1,74 +1,69 @@
 import { NextResponse } from "next/server";
-import { KABUPATEN, rand } from "@/lib/dummy";
+import { DUSUN, DESA_INFO, PENDUDUK_DESA } from "@/lib/dummy";
 
 export async function GET() {
-  const affected = KABUPATEN.filter((_, i) => i < 12);
-  const data = affected.flatMap(kab => {
-    const count = rand(1, 4);
-    return Array.from({ length: count }, (_, j) => ({
-      id: `BNC-${kab.id}-${j + 1}`,
-      kabupaten_kota: kab.nama,
-      kabkota: kab.nama,
-      kecamatan: `Kec. ${["Mutiara","Johan Pahlawan","Bebesen","Kuta Makmur","Peusangan"][j % 5]}`,
-      desa: `Desa ${["Paya","Blang","Meureudu","Langkak","Pasie"][j % 5]} ${j + 1}`,
-      jenis_bencana: "Banjir",
-      status: ["critical","warning","normal"][j % 3],
-      lat: kab.lat + (Math.random() - 0.5) * 0.3,
-      lng: kab.lng + (Math.random() - 0.5) * 0.3,
-      korban_meninggal: rand(0, 5),
-      korban_luka: rand(0, 20),
-      korban_hilang: rand(0, 3),
-      pengungsi: rand(50, 800),
-      rumah_rusak_berat: rand(0, 50),
-      rumah_rusak_sedang: rand(0, 80),
-      rumah_rusak_ringan: rand(0, 120),
-      sawah_ha: parseFloat((Math.random() * 50).toFixed(1)),
-      kebun_ha: parseFloat((Math.random() * 30).toFixed(1)),
-      tambak_ha: parseFloat((Math.random() * 20).toFixed(1)),
-      fasum_rusak: rand(0, 10),
-      tanggal: "2026-04-28",
-      updated_at: new Date().toISOString(),
-    }));
-  });
-  const enriched = data.map((d) => {
-    const jiwa_terdampak =
-      d.korban_meninggal + d.korban_luka + d.korban_hilang + d.pengungsi;
-    const rumah =
-      d.rumah_rusak_berat + d.rumah_rusak_sedang + d.rumah_rusak_ringan;
-    return { ...d, jiwa_terdampak, rumah };
+  // Data per dusun (menggantikan data per kejadian bencana)
+  const pendudukPerDusun = [628, 340, 158, 117];
+  const kkPerDusun       = [110,  94,  78,  65];
+  const luasPerDusun     = [850, 620, 540, 440];
+
+  const data = DUSUN.map((dusun, i) => {
+    const penduduk = pendudukPerDusun[i] ?? 120;
+    const kk       = kkPerDusun[i]       ?? 35;
+    const luas     = luasPerDusun[i]     ?? 300;
+    return {
+      id: `DSN-${dusun.id}`,
+      kabupaten_kota: DESA_INFO.kabupaten,
+      kabkota:        DESA_INFO.kabupaten,
+      kecamatan:      DESA_INFO.kecamatan,
+      desa:           DESA_INFO.nama,
+      nama_dusun:     dusun.nama,
+      // Field lama dipertahankan agar JS tidak error
+      jenis_bencana:  "Profil Desa",
+      status:         ["normal","normal","warning","normal"][i] ?? "normal",
+      lat:            dusun.lat,
+      lng:            dusun.lng,
+      // Profil
+      jumlah_penduduk: penduduk,
+      jumlah_kk:       kk,
+      luas_ha:         luas,
+      // Field bencana diisi 0 agar kalkulasi JS tidak crash
+      korban_meninggal:    0,
+      korban_luka:         0,
+      korban_hilang:       0,
+      pengungsi:           kk,        // dipakai JS → kita isi dengan jumlah KK dusun
+      rumah_rusak_berat:   0,
+      rumah_rusak_sedang:  0,
+      rumah_rusak_ringan:  0,
+      sawah_ha:            parseFloat(luas.toFixed(1)),
+      kebun_ha:            0,
+      tambak_ha:           0,
+      fasum_rusak:         0,
+      tanggal:             "2024-01-01",
+      updated_at:          new Date().toISOString(),
+    };
   });
 
-  let total_jiwa = 0,
-    total_pengungsi = 0,
-    total_titik_pengungsian = 0,
-    total_rumah = 0,
-    total_sawah = 0,
-    total_fasum = 0,
-    total_kebun = 0,
-    total_tambak = 0;
-
-  enriched.forEach((d) => {
-    total_jiwa += d.jiwa_terdampak;
-    total_pengungsi += d.pengungsi;
-    total_titik_pengungsian += 1;
-    total_rumah += d.rumah;
-    total_sawah += d.sawah_ha;
-    total_fasum += d.fasum_rusak;
-    total_kebun += d.kebun_ha;
-    total_tambak += d.tambak_ha;
-  });
+  const enriched = data.map((d) => ({
+    ...d,
+    jiwa_terdampak: d.jumlah_penduduk,
+    rumah: d.jumlah_kk,
+  }));
 
   return NextResponse.json({
     data: enriched,
-    total: data.length, 
+    total: enriched.length,
     updated_at: new Date().toISOString(),
-    total_jiwa,
-    total_pengungsi,
-    total_titik_pengungsian,
-    total_rumah,
-    total_sawah,
-    total_fasum,
-    total_kebun,
-    total_tambak
+    // KPI mapping untuk dashboard
+    total_jiwa:              PENDUDUK_DESA.total,          // Jumlah Penduduk
+    total_pengungsi:         PENDUDUK_DESA.total_kk,       // Jumlah KK
+    total_titik_pengungsian: PENDUDUK_DESA.jumlah_dusun,   // Jumlah Dusun
+    total_rumah:             PENDUDUK_DESA.total_rt + PENDUDUK_DESA.total_rw, // RT+RW
+    total_sawah:             DESA_INFO.luas_wilayah_ha,     // Luas Wilayah (Ha)
+    total_fasum:             DESA_INFO.tahun_berdiri,       // Tahun Berdiri (dipakai di stat-fasum)
+    total_kebun:             PENDUDUK_DESA.laki_laki,
+    total_tambak:            PENDUDUK_DESA.perempuan,
+    // Untuk kpi-kabupaten (distinct kabupaten)
+    kabupaten_terdampak: 1,
   });
 }

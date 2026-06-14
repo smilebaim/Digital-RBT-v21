@@ -37,10 +37,10 @@ const CONFIG = {
   // Use relative path since served from same server
   API_BASE: window.location.origin + '/api',
   // Supabase config moved to server-side proxy for security & performance
-  GEOJSON_URL: 'https://php.ckan-dev.siat.web.id/geojson-kotakab-aceh.json',
+  GEOJSON_URL: '',  // Desa Remau Bako Tuo – polygon desa (diisi jika tersedia)
   REFRESH_INTERVAL: 5 * 60 * 1000, // 5 minutes
-  MAP_CENTER: [4.695135, 96.749397],
-  MAP_ZOOM: 8,
+  MAP_CENTER: [-1.8294, 102.9301], // Desa Remau Bako Tuo, Kab. Batanghari, Jambi
+  MAP_ZOOM: 13,
 };
 
 // =====================================================
@@ -757,9 +757,9 @@ function fetchVillageDistributionData() {
 const TAB_DATA_SOURCES = {
   dampak: {
     sources: [
-      { key: 'bencana', label: 'Data Bencana', fetch: () => fetchAPI('/realtime/bencana') },
-      { key: 'clusterData', label: 'Data Cluster/Kerusakan', fetch: () => fetchClusterData() },
-      { key: 'pertanianData', label: 'Data Pertanian', fetch: () => fetchPertanianData() },
+      { key: 'bencana', label: 'Data Profil Desa', fetch: () => fetchAPI('/realtime/bencana') },
+      { key: 'clusterData', label: 'Data IDM & Program', fetch: () => fetchClusterData() },
+      { key: 'pertanianData', label: 'Data Program Pembangunan', fetch: () => fetchPertanianData() },
     ],
     process: (results) => {
       const clusterData = results.clusterData;
@@ -4348,7 +4348,7 @@ function renderBantuanCharts() {
   state.charts.bantuanStatus = new Chart(ctxStatus, {
     type: 'doughnut',
     data: {
-      labels: ['Kuning', 'Biru', 'Abu-abu', 'Putih'],
+      labels: ['Maju', 'Berkembang', 'Tertinggal', 'Sangat Tertinggal'],
       datasets: [
         {
           data: [

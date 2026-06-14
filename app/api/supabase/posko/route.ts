@@ -1,46 +1,56 @@
 import { NextResponse } from "next/server";
-import { KABUPATEN, rand } from "@/lib/dummy";
+import { DUSUN, DESA_INFO, IDM_HISTORI, IDM_DATA } from "@/lib/dummy";
+
+// Posko → Titik Penting Desa (kantor desa, balai, polindes, masjid, dll.)
 export async function GET() {
-  const data = KABUPATEN.flatMap((kab, i) =>
-    Array.from({ length: rand(1, 3) }, (_, j) => {
-      const male = rand(20, 200);
-      const female = rand(20, 200);
-      const child = rand(10, 100);
-      return {
-        id: `PSK-${kab.id}-${j}`,
-        name: `Posko ${kab.nama} ${j + 1}`,
-        nama: `Posko ${kab.nama} ${j + 1}`,
-        type: "Posko Pengungsian",
-        organizationName: ["BPBD", "Dinas Sosial", "PMI"][j % 3],
-        regency: kab.nama,
-        kabupaten_kota: kab.nama,
-        district: `Kec. ${j + 1}`,
-        kecamatan: `Kec. ${j + 1}`,
-        address: `Jl. Banda Aceh No.${rand(1, 99)}, ${kab.nama}`,
-        alamat: `Jl. Banda Aceh No.${rand(1, 99)}, ${kab.nama}`,
-        latitude: kab.lat + (Math.random() - 0.5) * 0.25,
-        longitude: kab.lng + (Math.random() - 0.5) * 0.25,
-        maleRefugee: male,
-        femaleRefugee: female,
-        childRefugee: child,
-        total_pengungsi: male + female + child,
-        jumlah_pengungsi: male + female + child,
-        jumlah_kk: rand(15, 180),
-        capacity: rand(100, 800),
-        kapasitas: rand(100, 800),
-        status: "aktif",
-        titik_pengungsian: rand(1, 5),
-        accessWater: Math.random() > 0.2,
-        accessSanitation: Math.random() > 0.3,
-        accessElectricity: Math.random() > 0.1,
-      };
-    })
-  );
+  const TITIK_PENTING = [
+    { nama: "Kantor Desa Remau Bako Tuo", type: "Kantor Desa", dusun: DUSUN[0], capacity: 100 },
+    { nama: "Balai Desa",                  type: "Balai Desa",  dusun: DUSUN[0], capacity: 200 },
+    { nama: "Polindes Remau Induk",         type: "Polindes",   dusun: DUSUN[0], capacity: 30  },
+    { nama: "Masjid Al-Ikhlas",             type: "Masjid",     dusun: DUSUN[1], capacity: 300 },
+    { nama: "SD Negeri 47 Batanghari",      type: "Sekolah",    dusun: DUSUN[1], capacity: 250 },
+    { nama: "Posyandu Bako Tuo",            type: "Posyandu",   dusun: DUSUN[1], capacity: 50  },
+    { nama: "Musala Sei Tembesi",           type: "Musala",     dusun: DUSUN[2], capacity: 100 },
+    { nama: "PAUD Tunas Bangsa",            type: "PAUD",       dusun: DUSUN[2], capacity: 60  },
+    { nama: "BUMDes Maju Bersama",          type: "BUMDes",     dusun: DUSUN[3], capacity: 50  },
+    { nama: "Poskamling Sungai Duren",      type: "Poskamling", dusun: DUSUN[3], capacity: 20  },
+  ];
+
+  const data = TITIK_PENTING.map((titik, i) => ({
+    id:               `TTP-${i + 1}`,
+    name:             titik.nama,
+    nama:             titik.nama,
+    type:             titik.type,
+    organizationName: "Pemerintah Desa",
+    regency:          DESA_INFO.kabupaten,
+    kabupaten_kota:   DESA_INFO.kabupaten,
+    district:         DESA_INFO.kecamatan,
+    kecamatan:        DESA_INFO.kecamatan,
+    address:          `${titik.dusun.nama}, Desa Remau Bako Tuo`,
+    alamat:           `${titik.dusun.nama}, Desa Remau Bako Tuo`,
+    latitude:         titik.dusun.lat  + (Math.random() - 0.5) * 0.003,
+    longitude:        titik.dusun.lng  + (Math.random() - 0.5) * 0.003,
+    maleRefugee:      0,
+    femaleRefugee:    0,
+    childRefugee:     0,
+    total_pengungsi:  0,
+    jumlah_pengungsi: 0,
+    jumlah_kk:        0,
+    capacity:         titik.capacity,
+    kapasitas:        titik.capacity,
+    status:           "aktif",
+    titik_pengungsian: 1,
+    accessWater:       true,
+    accessSanitation:  true,
+    accessElectricity: true,
+  }));
+
   const summary = {
-    total: data.length,
-    total_posko: data.length,
-    total_pengungsi: data.reduce((a, b) => a + b.total_pengungsi, 0),
-    titik_pengungsian: data.reduce((a, b) => a + b.titik_pengungsian, 0),
+    total:            data.length,
+    total_posko:      data.length,
+    total_pengungsi:  0,
+    titik_pengungsian: data.length,
   };
+
   return NextResponse.json({ data, summary, total: data.length });
 }

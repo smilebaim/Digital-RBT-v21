@@ -1,21 +1,28 @@
-﻿import { NextResponse } from "next/server";
-import { KABUPATEN, rand } from "@/lib/dummy";
+import { NextResponse } from "next/server";
+import { DUSUN, DESA_INFO } from "@/lib/dummy";
+
+// Puskesmas → Fasilitas Kesehatan & Layanan Publik Desa
 export async function GET() {
-  const data = KABUPATEN.flatMap((kab, i) => {
-    const n = Math.floor(Math.random()*3)+1;
-    return Array.from({length:n},(_,j)=>({
-      id: `PKM-${kab.id}-${j+1}`,
-      nama: `Puskesmas ${kab.nama} ${j+1}`,
-      kabupaten_kota: kab.nama,
-      kecamatan: `Kec. ${["Induk","Pembantu","Rawat Inap"][j%3]}`,
-      tipe: j===0?"Puskesmas Induk":"Puskesmas Pembantu",
-      lat: kab.lat+(Math.random()-0.5)*0.25,
-      lng: kab.lng+(Math.random()-0.5)*0.25,
-      status: "aktif",
-      kapasitas_bed: rand(10,50),
-      tenaga_dokter: rand(1,5),
-      kondisi: ["normal","terdampak"][j%2===0?0:1],
-    }));
-  });
+  const FASILITAS = [
+    { nama: "Polindes Remau Bako Tuo", tipe: "Polindes", dusunIdx: 0, bed: 4,  dokter: 0, kondisi: "normal"   },
+    { nama: "Posyandu Dusun Bako Tuo", tipe: "Posyandu", dusunIdx: 1, bed: 0,  dokter: 0, kondisi: "normal"   },
+    { nama: "Posyandu Dusun Remau",    tipe: "Posyandu", dusunIdx: 0, bed: 0,  dokter: 0, kondisi: "normal"   },
+    { nama: "Puskesmas Maro Sebo Ulu", tipe: "Puskesmas Induk", dusunIdx: 0, bed: 20, dokter: 2, kondisi: "normal" },
+  ];
+
+  const data = FASILITAS.map((fas, i) => ({
+    id:             `FAS-${i + 1}`,
+    nama:           fas.nama,
+    kabupaten_kota: DESA_INFO.kabupaten,
+    kecamatan:      DESA_INFO.kecamatan,
+    tipe:           fas.tipe,
+    lat:            DUSUN[fas.dusunIdx].lat + (Math.random() - 0.5) * 0.003,
+    lng:            DUSUN[fas.dusunIdx].lng + (Math.random() - 0.5) * 0.003,
+    status:         "aktif",
+    kapasitas_bed:  fas.bed,
+    tenaga_dokter:  fas.dokter,
+    kondisi:        fas.kondisi,
+  }));
+
   return NextResponse.json({ data, total: data.length });
 }
