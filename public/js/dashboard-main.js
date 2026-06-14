@@ -1196,7 +1196,7 @@ function renderDampakCharts(data) {
 
   // Status Pie Chart
   const ctxStatus = document.getElementById('chartStatusDampak');
-  if (!ctxStatus) return;
+  // if (!ctxStatus) return; // Removed to prevent skipping other charts
   if (state.charts.statusDampak) state.charts.statusDampak.destroy();
 
   // Count status from data
@@ -1211,7 +1211,7 @@ function renderDampakCharts(data) {
     });
   }
 
-  state.charts.statusDampak = new Chart(ctxStatus, {
+  if (ctxStatus) state.charts.statusDampak = new Chart(ctxStatus, {
     type: 'doughnut',
     data: {
       labels: ['Tanggap Darurat', 'Siaga Darurat', 'Normal'],
@@ -1236,14 +1236,14 @@ function renderDampakCharts(data) {
 
   // Top Wilayah Bar Chart
   const ctxTop = document.getElementById('chartTopWilayah');
-  if (!ctxTop) return;
+  // if (!ctxTop) return;
   if (state.charts.topWilayah) state.charts.topWilayah.destroy();
 
   const sorted = [...(data.data || [])]
     .sort((a, b) => (b.jiwa_terdampak || 0) - (a.jiwa_terdampak || 0))
     .slice(0, 5);
 
-  state.charts.topWilayah = new Chart(ctxTop, {
+  if (ctxTop) state.charts.topWilayah = new Chart(ctxTop, {
     type: 'bar',
     data: {
       labels: sorted.map((d) => getKabupatenLabel(d)),
@@ -3439,7 +3439,7 @@ function renderDampakChartsFiltered(filteredData) {
     else normal++;
   });
 
-  state.charts.statusDampak = new Chart(ctxStatus, {
+  if (ctxStatus) state.charts.statusDampak = new Chart(ctxStatus, {
     type: 'doughnut',
     data: {
       labels: ['Tanggap Darurat', 'Siaga Darurat', 'Normal'],
@@ -3470,7 +3470,7 @@ function renderDampakChartsFiltered(filteredData) {
     .sort((a, b) => b.jiwa_terdampak - a.jiwa_terdampak)
     .slice(0, 5);
 
-  state.charts.topWilayah = new Chart(ctxTop, {
+  if (ctxTop) state.charts.topWilayah = new Chart(ctxTop, {
     type: 'bar',
     data: {
       labels: sorted.map(
@@ -3580,7 +3580,7 @@ function renderPengungsiChartsFiltered(disabilitasFiltered) {
 
   const umurData = state.data.pendudukUmur || [];
 
-  state.charts.umur = new Chart(ctxUmur, {
+  if (ctxUmur) state.charts.umur = new Chart(ctxUmur, {
     type: 'bar',
     data: {
       labels: umurData.map((d) => d.kelompok_umur || '-'),
@@ -3657,7 +3657,7 @@ function renderPengungsiChartsFiltered(disabilitasFiltered) {
     disabilitasAgg['Lainnya'] += Number(d.DISABILITAS_LAINNYA_JML) || 0;
   });
 
-  state.charts.disabilitas = new Chart(ctxDisabilitas, {
+  if (ctxDisabilitas) state.charts.disabilitas = new Chart(ctxDisabilitas, {
     type: 'doughnut',
     data: {
       labels: Object.keys(disabilitasAgg),
@@ -4149,7 +4149,7 @@ function renderPengungsiCharts() {
     disabilitasAgg['Lainnya'] += Number(d.DISABILITAS_LAINNYA_JML) || 0;
   });
 
-  state.charts.disabilitas = new Chart(ctxDisabilitas, {
+  if (ctxDisabilitas) state.charts.disabilitas = new Chart(ctxDisabilitas, {
     type: 'doughnut',
     data: {
       labels: Object.keys(disabilitasAgg),
@@ -4186,7 +4186,7 @@ function renderPengungsiCharts() {
   // Use penduduk_kk level 2 (kabkota) - field is 'wilayah' and 'jumlah'
   const kkData = (state.data.pendudukKK || []).filter((d) => d.level === 2);
 
-  state.charts.kk = new Chart(ctxKK, {
+  if (ctxKK) state.charts.kk = new Chart(ctxKK, {
     type: 'bar',
     data: {
       labels: kkData.slice(0, 10).map((d) => {
@@ -4344,7 +4344,7 @@ function renderBantuanCharts() {
   const ctxStatus = document.getElementById('chartBantuanStatus');
   if (state.charts.bantuanStatus) state.charts.bantuanStatus.destroy();
 
-  state.charts.bantuanStatus = new Chart(ctxStatus, {
+  if (ctxStatus) state.charts.bantuanStatus = new Chart(ctxStatus, {
     type: 'doughnut',
     data: {
       labels: ['Maju', 'Berkembang', 'Tertinggal', 'Sangat Tertinggal'],
@@ -4387,7 +4387,7 @@ function renderBantuanCharts() {
     .sort((a, b) => b[1] - a[1])
     .slice(0, 5);
 
-  state.charts.bantuanKab = new Chart(ctxKab, {
+  if (ctxKab) state.charts.bantuanKab = new Chart(ctxKab, {
     type: 'bar',
     data: {
       labels: sorted.map((d) => d[0].replace('KAB. ', '').replace('KOTA ', '')),
