@@ -17,18 +17,6 @@ const KECAMATAN_NAMES = [
 
 const DESA_PREFIX = ["Paya", "Blang", "Meureudu", "Langkak", "Pasie", "Lampoh", "Deah"];
 
-export function makeBox(lat: number, lng: number, size = 0.35) {
-  return [
-    [
-      [lng - size, lat - size],
-      [lng + size, lat - size],
-      [lng + size, lat + size],
-      [lng - size, lat + size],
-      [lng - size, lat - size],
-    ],
-  ];
-}
-
 export function findKabupatenByKode(kode: string) {
   return KABUPATEN.find((k) => k.id === kode) ?? null;
 }
@@ -42,7 +30,7 @@ export function buildPolygonDetail(kode: string) {
 
   return {
     data: {
-      geometry: { type: "Polygon" as const, coordinates: makeBox(kab.lat, kab.lng) },
+      center: { lat: kab.lat, lng: kab.lng },
       properties: {
         kode: kab.id,
         nama: kab.nama,
