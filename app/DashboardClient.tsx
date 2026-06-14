@@ -81,29 +81,6 @@ async function loadDashboardScripts() {
 
 export default function DashboardClient() {
 
-  useEffect(() => {
-    const injectKontrolLink = () => {
-      if (document.getElementById('kontrol-nav-link')) return;
-      const actions = document.querySelector('header .flex.items-center.gap-2');
-      if (!actions) return;
-      const link = document.createElement('a');
-      link.id = 'kontrol-nav-link';
-      link.href = '/kontrol';
-      link.title = 'Dashboard Kontrol';
-      link.className =
-        'bg-white/20 hover:bg-white/30 p-1.5 md:p-2 rounded-lg transition inline-flex items-center';
-      link.innerHTML = '<i class="fas fa-sliders-h text-sm md:text-base"></i>';
-      const refreshBtn = actions.querySelector('button[title="Refresh Data"]');
-      if (refreshBtn) {
-        actions.insertBefore(link, refreshBtn);
-      } else {
-        actions.appendChild(link);
-      }
-    };
-    injectKontrolLink();
-    const t = window.setTimeout(injectKontrolLink, 100);
-    return () => window.clearTimeout(t);
-  }, []);
 
   useEffect(() => {
     // Expose stubs to prevent ReferenceError before scripts load
