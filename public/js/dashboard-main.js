@@ -4347,7 +4347,7 @@ function renderBantuanCharts() {
   if (ctxStatus) state.charts.bantuanStatus = new Chart(ctxStatus, {
     type: 'doughnut',
     data: {
-      labels: ['Maju', 'Berkembang', 'Tertinggal', 'Sangat Tertinggal'],
+      labels: ['Sangat Baik', 'Baik', 'Cukup', 'Kurang'],
       datasets: [
         {
           data: [
@@ -4372,38 +4372,51 @@ function renderBantuanCharts() {
     },
   });
 
-  // Top Kabupaten Bar Chart
+  // Skor Indikator Bar Chart
   const ctxKab = document.getElementById('chartBantuanKab');
   if (state.charts.bantuanKab) state.charts.bantuanKab.destroy();
 
-  // Aggregate by kabupaten
-  const kabCounts = {};
-  data.data?.forEach((item) => {
-    const kab = item.kabupaten || 'Unknown';
-    kabCounts[kab] = (kabCounts[kab] || 0) + 1;
+  const indikators = data.data || [];
+  
+  // Hitung rata-rata IKS, IKE, IKL
+  let sumIKS = 0, countIKS = 0;
+  let sumIKE = 0, countIKE = 0;
+  let sumIKL = 0, countIKL = 0;
+
+  indikators.forEach(d => {
+    if (d.kode && d.kode.startsWith('S')) { sumIKS += d.skor; countIKS++; }
+    if (d.kode && d.kode.startsWith('E')) { sumIKE += d.skor; countIKE++; }
+    if (d.kode && d.kode.startsWith('L')) { sumIKL += d.skor; countIKL++; }
   });
 
-  const sorted = Object.entries(kabCounts)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 5);
+  const avgIKS = countIKS > 0 ? (sumIKS / countIKS).toFixed(2) : 0;
+  const avgIKE = countIKE > 0 ? (sumIKE / countIKE).toFixed(2) : 0;
+  const avgIKL = countIKL > 0 ? (sumIKL / countIKL).toFixed(2) : 0;
 
   if (ctxKab) state.charts.bantuanKab = new Chart(ctxKab, {
     type: 'bar',
     data: {
-      labels: sorted.map((d) => d[0].replace('KAB. ', '').replace('KOTA ', '')),
+      labels: ['Ketahanan Sosial (IKS)', 'Ketahanan Ekonomi (IKE)', 'Ketahanan Lingkungan (IKL)'],
       datasets: [
         {
-          label: 'Titik',
-          data: sorted.map((d) => d[1]),
-          backgroundColor: '#dc2626',
+          label: 'Skor',
+          data: [avgIKS, avgIKE, avgIKL],
+          backgroundColor: ['#ec4899', '#3b82f6', '#10b981'],
         },
       ],
     },
     options: {
-      indexAxis: 'y',
       responsive: true,
       maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
+      scales: {
+        y: {
+          beginAtZero: true,
+          max: 1.0
+        }
+      },
+      plugins: {
+        legend: { display: false }
+      }
     },
   });
 }
@@ -4414,7 +4427,7 @@ function populateBantuanFilters() {
   data.forEach((d) => d.kabupaten && kabSet.add(d.kabupaten));
 
   const select = document.getElementById('filterBantuanKab');
-  select.innerHTML =
+  if (select) select.innerHTML =
     '<option value="">Semua Kabupaten</option>' +
     [...kabSet]
       .sort()
@@ -4424,70 +4437,44 @@ function populateBantuanFilters() {
 
 function renderBantuanTable() {
   const tbody = document.getElementById('tableBantuan');
-  let data = state.data.banlog?.data || [];
+  if (!tbody) return;
 
-  // Apply filters (using normalized matching for kabupaten)
-  const kabFilter = document.getElementById('filterBantuanKab').value;
-  const warnaFilter = document.getElementById('filterBantuanWarna').value;
-
-  if (kabFilter) {
-    data = data.filter((d) => matchesKabupatenFilter(d.kabupaten, kabFilter));
-  }
-  if (warnaFilter) data = data.filter((d) => d.kategori === warnaFilter);
-
-  const colorBadges = {
-    kuning: 'bg-yellow-100 text-yellow-700',
-    biru: 'bg-blue-100 text-blue-700',
-    biru_keabuan: 'bg-gray-100 text-gray-700',
-    putih: 'bg-white text-gray-500 border',
-  };
-
-  tbody.innerHTML = data
-    .slice(0, 50)
-    .map(
-      (row) => `
-                <tr class="border-b hover:bg-gray-50">
-                    <td class="p-3 font-medium">${row.desa || '-'}</td>
-                    <td class="p-3">${row.kecamatan || '-'}</td>
-                    <td class="p-3">${row.kabupaten || '-'}</td>
-                    <td class="p-3">${row.satuan || '-'}</td>
-                    <td class="p-3 text-center">
-                        <span class="badge ${colorBadges[row.kategori] || 'bg-gray-100'}">${row.kategori || '-'}</span>
-                    </td>
-                </tr>
-            `
-    )
-    .join('');
-}
-
-function onBantuanFilterChange() {
-  const kabFilter = document.getElementById('filterBantuanKab').value;
-
-  // Update global filter state
-  state.globalFilter.kabupaten = kabFilter;
-
-  // Update global filter dropdown
-  const globalSelect = document.getElementById('globalFilterKabupaten');
-  if (globalSelect) {
-    const options = Array.from(globalSelect.options);
-    const match = options.find(
-      (opt) => opt.value && normalizeKabupaten(opt.value) === normalizeKabupaten(kabFilter)
-    );
-    globalSelect.value = match ? match.value : kabFilter;
+  const data = state.data.banlog?.data || [];
+  
+  if (data.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="4" class="text-center p-4 text-gray-400">Tidak ada data indikator</td></tr>';
+    return;
   }
 
-  // Update global filter info display
-  const info = document.getElementById('globalFilterInfo');
-  const name = document.getElementById('filterKabName');
-  if (kabFilter) {
-    info.classList.remove('hidden');
-    name.textContent = kabFilter;
-  } else {
-    info.classList.add('hidden');
-  }
+  tbody.innerHTML = data.map((item) => {
+    let statusLabel = 'Kurang';
+    let statusClass = 'bg-gray-100 text-gray-700';
+    
+    if (item.status === 'kuning') {
+        statusLabel = 'Sangat Baik';
+        statusClass = 'bg-yellow-100 text-yellow-700';
+    } else if (item.status === 'biru') {
+        statusLabel = 'Baik';
+        statusClass = 'bg-blue-100 text-blue-700';
+    } else if (item.status === 'biru_keabuan') {
+        statusLabel = 'Cukup';
+        statusClass = 'bg-gray-100 text-gray-700';
+    } else if (item.status === 'putih') {
+        statusLabel = 'Kurang';
+        statusClass = 'bg-gray-100 text-gray-500';
+    }
 
-  // Render the table
-  renderBantuanTable();
+    return `
+      <tr class="border-b hover:bg-gray-50">
+        <td class="p-3 font-medium text-xs">${item.nama_indikator || '-'}</td>
+        <td class="p-3 text-center">${item.kode || '-'}</td>
+        <td class="p-3 text-right font-bold">${item.skor ? item.skor.toFixed(2) : '-'}</td>
+        <td class="p-3 text-center">
+            <span class="px-2 py-1 rounded text-xs ${statusClass}">${statusLabel}</span>
+        </td>
+      </tr>
+    `;
+  }).join('');
 }
 
 function initBantuanMap() {
@@ -4953,6 +4940,10 @@ async function loadGeoJSON(map) {
       'records'
     );
 
+    if (!CONFIG.GEOJSON_URL) {
+      console.log('No GeoJSON URL provided, skipping polygon map loading.');
+      return;
+    }
     const response = await fetch(CONFIG.GEOJSON_URL);
     const geojson = await response.json();
 
