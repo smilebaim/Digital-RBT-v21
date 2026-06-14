@@ -103,18 +103,17 @@ export async function GET(
 
   const data = generateKabupatenData(kabupaten);
 
-  const totals = data
-    .filter((d) => (d as Record<string, unknown>).level === "kecamatan")
+  const totals = (data as any[])
+    .filter((d) => d.level === "kecamatan")
     .reduce(
-      (acc, d) => {
-        const item = d as Record<string, number>;
+      (acc: any, d: any) => {
         return {
-          terdampak_kk: acc.terdampak_kk + (item.terdampak_kk || 0),
-          terdampak_jiwa: acc.terdampak_jiwa + (item.terdampak_jiwa || 0),
-          pengungsi_kk: acc.pengungsi_kk + (item.pengungsi_kk || 0),
-          pengungsi_jiwa: acc.pengungsi_jiwa + (item.pengungsi_jiwa || 0),
-          korban_hilang: acc.korban_hilang + (item.korban_hilang || 0),
-          korban_meninggal: acc.korban_meninggal + (item.korban_meninggal || 0),
+          terdampak_kk: acc.terdampak_kk + (d.terdampak_kk || 0),
+          terdampak_jiwa: acc.terdampak_jiwa + (d.terdampak_jiwa || 0),
+          pengungsi_kk: acc.pengungsi_kk + (d.pengungsi_kk || 0),
+          pengungsi_jiwa: acc.pengungsi_jiwa + (d.pengungsi_jiwa || 0),
+          korban_hilang: acc.korban_hilang + (d.korban_hilang || 0),
+          korban_meninggal: acc.korban_meninggal + (d.korban_meninggal || 0),
         };
       },
       { terdampak_kk: 0, terdampak_jiwa: 0, pengungsi_kk: 0, pengungsi_jiwa: 0, korban_hilang: 0, korban_meninggal: 0 }
