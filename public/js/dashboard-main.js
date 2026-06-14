@@ -4944,6 +4944,10 @@ async function loadGeoJSON(map) {
       console.log('No GeoJSON URL provided, skipping polygon map loading.');
       return;
     }
+    if (!CONFIG.GEOJSON_URL) {
+      console.log('No GeoJSON URL provided, skipping polygon map loading.');
+      return;
+    }
     const response = await fetch(CONFIG.GEOJSON_URL);
     const geojson = await response.json();
 
