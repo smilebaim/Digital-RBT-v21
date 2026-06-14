@@ -2,10 +2,10 @@
 
 // Dusun-dusun dalam Desa Remau Bako Tuo
 export const DUSUN = [
-  { id: "1501", nama: "Dusun Remau Induk",  lat: -1.8270, lng: 102.9280 },
-  { id: "1502", nama: "Dusun Bako Tuo",     lat: -1.8320, lng: 102.9330 },
-  { id: "1503", nama: "Dusun Sei Tembesi",  lat: -1.8360, lng: 102.9260 },
-  { id: "1504", nama: "Dusun Sungai Duren", lat: -1.8240, lng: 102.9370 },
+  { id: "1501", nama: "Dusun Remau Induk",  lat: -1.215862, lng: 104.349622 },
+  { id: "1502", nama: "Dusun Bako Tuo",     lat: -1.220862, lng: 104.354622 },
+  { id: "1503", nama: "Dusun Sei Tembesi",  lat: -1.224862, lng: 104.347622 },
+  { id: "1504", nama: "Dusun Sungai Duren", lat: -1.212862, lng: 104.358622 },
 ];
 
 // Backward compat – semua route lama masih pakai KABUPATEN
@@ -20,8 +20,8 @@ export const DESA_INFO = {
   kode_desa:      "1504030010",
   tahun_berdiri:  1956,
   luas_wilayah_ha: 2450,
-  lat:  -1.8294,
-  lng:  102.9301,
+  lat:  -1.2182621315578288,
+  lng:  104.35172172755148,
 };
 
 export const PENDUDUK_DESA = {

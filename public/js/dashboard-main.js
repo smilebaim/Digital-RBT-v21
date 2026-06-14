@@ -39,7 +39,7 @@ const CONFIG = {
   // Supabase config moved to server-side proxy for security & performance
   GEOJSON_URL: '',  // Desa Remau Bako Tuo – polygon desa (diisi jika tersedia)
   REFRESH_INTERVAL: 5 * 60 * 1000, // 5 minutes
-  MAP_CENTER: [-1.8294, 102.9301], // Desa Remau Bako Tuo, Kab. Batanghari, Jambi
+  MAP_CENTER: [-1.2182621315578288, 104.35172172755148], // Desa Remau Bako Tuo, Kab. Batanghari, Jambi
   MAP_ZOOM: 13,
 };
 

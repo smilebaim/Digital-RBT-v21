@@ -110,8 +110,8 @@ export async function GET() {
   const cluster1 = IDM_HISTORI.map((h, i) => ({
     id: `IDM-H-${h.tahun}`,
     kabupaten_kota: "Batanghari",
-    lat: IDM_DATA ? -1.8294 + (i * 0.001) : -1.8294,
-    lng: 102.9301,
+    lat: IDM_DATA ? -1.2182621315578288 + (i * 0.001) : -1.2182621315578288,
+    lng: 104.35172172755148,
     tahun: h.tahun,
     skor: h.skor,
     status: h.status,
