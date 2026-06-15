@@ -1,33 +1,81 @@
 import { NextResponse } from "next/server";
-import { KABUPATEN, rand } from "@/lib/dummy";
+import { DESA_INFO } from "@/lib/dummy";
+
+// orang-hilang → Program Unggulan Desa (dipakai di slider "Program Unggulan" Tab Pembangunan)
 export async function GET() {
-  const names = ["Ahmad", "Budi", "Siti", "Rina", "Hasan", "Fatimah", "Rizky", "Nurul", "Dedi", "Amir", "Sara", "Yusuf", "Lina", "Fajar", "Dewi"];
-  const data = Array.from({ length: 15 }, (_, i) => ({
-    id: `OH-${i + 1}`,
-    name: names[i],
-    nama: names[i],
-    age: rand(5, 70),
-    usia: rand(5, 70),
-    gender: i % 2 === 0 ? "Laki-laki" : "Perempuan",
-    jenis_kelamin: i % 2 === 0 ? "Laki-laki" : "Perempuan",
-    regency: KABUPATEN[i % KABUPATEN.length].nama,
-    kabupaten_kota: KABUPATEN[i % KABUPATEN.length].nama,
-    district: `Kec. ${i + 1}`,
-    kecamatan: `Kec. ${i + 1}`,
-    status: i < 5 ? "dicari" : "ditemukan",
-    lastSeen: `2026-04-${String(rand(20, 28)).padStart(2, "0")}`,
-    tanggal_hilang: `2026-04-${String(rand(20, 28)).padStart(2, "0")}`,
-    description: i < 5 ? "Masih dalam pencarian Tim SAR" : "Berhasil ditemukan dalam kondisi selamat",
-    keterangan: i < 5 ? "Masih dalam pencarian Tim SAR" : "Berhasil ditemukan dalam kondisi selamat",
-    latitude: KABUPATEN[i % KABUPATEN.length].lat + (Math.random() - 0.5) * 0.2,
-    longitude: KABUPATEN[i % KABUPATEN.length].lng + (Math.random() - 0.5) * 0.2,
-    lat: KABUPATEN[i % KABUPATEN.length].lat + (Math.random() - 0.5) * 0.2,
-    lng: KABUPATEN[i % KABUPATEN.length].lng + (Math.random() - 0.5) * 0.2,
+  const PROGRAM_UNGGULAN = [
+    {
+      nama: "BUMDes Remau Maju",
+      keterangan: "Pengembangan usaha simpan-pinjam dan kios desa untuk mendorong perekonomian warga",
+      status: "berjalan",
+      bidang: "Ekonomi",
+      anggaran: 75_000_000,
+      realisasi: 68_500_000,
+    },
+    {
+      nama: "Posyandu Aktif 4 Dusun",
+      keterangan: "Layanan kesehatan ibu dan balita setiap bulan di seluruh dusun",
+      status: "berjalan",
+      bidang: "Kesehatan",
+      anggaran: 24_000_000,
+      realisasi: 20_000_000,
+    },
+    {
+      nama: "Pembangunan Jalan Rabat Beton",
+      keterangan: "Pengerasan jalan dusun sepanjang 1.200 meter untuk akses warga",
+      status: "selesai",
+      bidang: "Infrastruktur",
+      anggaran: 280_000_000,
+      realisasi: 278_500_000,
+    },
+    {
+      nama: "Digitalisasi Administrasi Desa",
+      keterangan: "Penggunaan sistem informasi desa untuk pelayanan administrasi warga secara online",
+      status: "berjalan",
+      bidang: "Pemerintahan",
+      anggaran: 35_000_000,
+      realisasi: 22_000_000,
+    },
+    {
+      nama: "Kelompok Tani Organik",
+      keterangan: "Pembinaan pertanian organik untuk meningkatkan nilai jual hasil tani warga",
+      status: "berjalan",
+      bidang: "Pertanian",
+      anggaran: 42_000_000,
+      realisasi: 38_000_000,
+    },
+  ];
+
+  const data = PROGRAM_UNGGULAN.map((prog, i) => ({
+    id:                   `PRG-${i + 1}`,
+    // Field lama (masih dipakai JS slider)
+    missingPersonName:    prog.nama,
+    missingPersonStatus:  prog.status === "selesai" ? "Found" : "Missing",
+    missingPersonAge:     null,
+    missingPersonGender:  null,
+    missingPersonPhotosUrl: [],
+    reporterPhone:        "-",
+    district:             prog.bidang,
+    regency:              DESA_INFO.kabupaten,
+    // Field baru (lebih deskriptif)
+    nama:                 prog.nama,
+    keterangan:           prog.keterangan,
+    status:               prog.status,
+    bidang:               prog.bidang,
+    anggaran:             prog.anggaran,
+    realisasi:            prog.realisasi,
+    kabupaten_kota:       DESA_INFO.kabupaten,
+    kecamatan:            DESA_INFO.kecamatan,
+    desa:                 DESA_INFO.nama,
   }));
+
   const summary = {
-    total: data.length,
-    dicari: data.filter(d => d.status === "dicari").length,
-    ditemukan: data.filter(d => d.status === "ditemukan").length
+    total:     data.length,
+    ongoing:   data.filter((d) => d.status === "berjalan").length,
+    found:     data.filter((d) => d.status === "selesai").length,
+    dicari:    data.filter((d) => d.status === "berjalan").length,
+    ditemukan: data.filter((d) => d.status === "selesai").length,
   };
-  return NextResponse.json({ data, summary });
+
+  return NextResponse.json({ data, summary, total: data.length });
 }

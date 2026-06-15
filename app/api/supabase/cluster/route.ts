@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { DUSUN, IDM_DATA, IDM_INDIKATOR, IDM_HISTORI, SEKTOR, rand, pick } from "@/lib/dummy";
+import { DUSUN, IDM_DATA, IDM_INDIKATOR, IDM_HISTORI } from "@/lib/dummy";
 
 export async function GET() {
   // cluster6 → Indikator IDM per dimensi (dipakai tab Indeks/Peta untuk rekap)
@@ -20,8 +20,8 @@ export async function GET() {
       // status_kerusakan dipakai JS untuk kpi-kuning/biru/abu/putih (tab Indeks)
       status_kerusakan: ind.skor >= 0.80 ? "kuning" : ind.skor >= 0.70 ? "biru" : "biru_keabuan",
       kondisi: ind.skor >= 0.75 ? "Baik" : "Sedang",
-      lat: DUSUN[j % DUSUN.length].lat + (Math.random() - 0.5) * 0.005,
-      lng: DUSUN[j % DUSUN.length].lng + (Math.random() - 0.5) * 0.005,
+      lat: DUSUN[j % DUSUN.length].lat,
+      lng: DUSUN[j % DUSUN.length].lng,
       nilai_kerusakan_ringan: Math.round(ind.skor * 100),
       nilai_kerusakan_sedang: 0,
       nilai_kerusakan_berat: 0,
@@ -53,8 +53,8 @@ export async function GET() {
       status_fisik: "Perlu Peningkatan",
       status_kerusakan: ind.skor >= 0.70 ? "biru" : "biru_keabuan",
       kondisi: "Sedang",
-      lat: DUSUN[j % DUSUN.length].lat + (Math.random() - 0.5) * 0.005,
-      lng: DUSUN[j % DUSUN.length].lng + (Math.random() - 0.5) * 0.005,
+      lat: DUSUN[j % DUSUN.length].lat,
+      lng: DUSUN[j % DUSUN.length].lng,
       nilai_kerusakan_ringan: Math.round(ind.skor * 100),
       nilai_kerusakan_sedang: 0,
       nilai_kerusakan_berat: 0,
@@ -86,8 +86,8 @@ export async function GET() {
       status_fisik: "Baik",
       status_kerusakan: "kuning",
       kondisi: "Baik",
-      lat: DUSUN[j % DUSUN.length].lat + (Math.random() - 0.5) * 0.005,
-      lng: DUSUN[j % DUSUN.length].lng + (Math.random() - 0.5) * 0.005,
+      lat: DUSUN[j % DUSUN.length].lat,
+      lng: DUSUN[j % DUSUN.length].lng,
       nilai_kerusakan_ringan: Math.round(ind.skor * 100),
       nilai_kerusakan_sedang: 0,
       nilai_kerusakan_berat: 0,

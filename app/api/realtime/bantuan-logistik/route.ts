@@ -28,8 +28,8 @@ export async function GET() {
     nama_indikator: ind.nama,
     kode:           ind.kode,
     skor:           ind.skor,
-    lat:            DUSUN[i % DUSUN.length].lat + (Math.random() - 0.5) * 0.004,
-    lng:            DUSUN[i % DUSUN.length].lng + (Math.random() - 0.5) * 0.004,
+    lat:            DUSUN[i % DUSUN.length].lat,
+    lng:            DUSUN[i % DUSUN.length].lng,
   }));
 
   // Hitung summary per status — dipakai oleh updateBantuanKPIs() di JS

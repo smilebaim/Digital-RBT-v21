@@ -423,24 +423,49 @@ const sektorPagination = {
 };
 
 function updateClusterSummaryUI() {
-  const summary = state.data.clusterSummary;
-  if (!summary) return;
+  // Prioritaskan data APBDes dari pendudukSummary (tab Profil)
+  const pendudukSummary = state.data.pendudukSummary;
+  const clusterSummary  = state.data.clusterSummary;
 
-  // Update total kerusakan
+  // Panel Rekap APBDes: cluster-total-kerusakan = Dana Desa, cluster-total-kerugian = ADD
   const kerusakanEl = document.getElementById('cluster-total-kerusakan');
-  if (kerusakanEl) kerusakanEl.textContent = formatRupiah(summary.total_kerusakan);
+  const kerugianEl  = document.getElementById('cluster-total-kerugian');
+  const totalKKEl   = document.getElementById('cluster-total-kerusakan-kerugian');
 
-  // Update total kerugian
-  const kerugianEl = document.getElementById('cluster-total-kerugian');
-  if (kerugianEl) kerugianEl.textContent = formatRupiah(summary.total_kerugian);
+  if (pendudukSummary) {
+    if (kerusakanEl) kerusakanEl.textContent = formatRupiah(pendudukSummary.total_kk        || 0);
+    if (kerugianEl)  kerugianEl.textContent  = formatRupiah(pendudukSummary.total_disabilitas|| 0);
+    if (totalKKEl)   totalKKEl.textContent   = formatRupiah(pendudukSummary.total_penduduk  || 0);
+  } else if (clusterSummary) {
+    if (kerusakanEl) kerusakanEl.textContent = formatRupiah(clusterSummary.total_kerusakan  || 0);
+    if (kerugianEl)  kerugianEl.textContent  = formatRupiah(clusterSummary.total_kerugian   || 0);
+    if (totalKKEl)   totalKKEl.textContent   = formatRupiah((clusterSummary.total_kerusakan || 0) + (clusterSummary.total_kerugian || 0));
+  }
 
-  // Update total kerusakan + kerugian
-  const totalKKEl = document.getElementById('cluster-total-kerusakan-kerugian');
-  if (totalKKEl) totalKKEl.textContent = formatRupiah(summary.total_kerusakan + summary.total_kerugian);
+  // Update sektor breakdown (Per Bidang APBDes)
+  const sektorContainer = document.getElementById('cluster-sektor-breakdown');
+  if (sektorContainer && pendudukSummary) {
+    // Ambil data bidang dari pertanian jika tersedia
+    const pertanian = state.data.pertanian || [];
+    if (pertanian.length > 0) {
+      const byJenis = {};
+      pertanian.forEach(item => {
+        const jenis = item.jenis || 'Lainnya';
+        if (!byJenis[jenis]) byJenis[jenis] = 0;
+        byJenis[jenis] += Number(item.taksir_kerugian) || 0;
+      });
+      sektorPagination.allEntries = Object.entries(byJenis)
+        .sort((a, b) => b[1] - a[1]);
+      sektorPagination.totalPages = Math.ceil(sektorPagination.allEntries.length / sektorPagination.perPage);
+      sektorPagination.currentPage = 1;
+      renderSektorBreakdown();
+      return;
+    }
+  }
 
-  // Update sektor breakdown with pagination
-  if (summary.by_sektor) {
-    sektorPagination.allEntries = Object.entries(summary.by_sektor)
+  // Fallback: gunakan clusterSummary.by_sektor
+  if (clusterSummary?.by_sektor) {
+    sektorPagination.allEntries = Object.entries(clusterSummary.by_sektor)
       .sort((a, b) => b[1].kerusakan - a[1].kerusakan);
     sektorPagination.totalPages = Math.ceil(sektorPagination.allEntries.length / sektorPagination.perPage);
     sektorPagination.currentPage = 1;
@@ -469,7 +494,7 @@ function renderSektorBreakdown() {
       ([sektor, data]) => `
       <div class="flex justify-between items-center py-1 text-xs">
         <span class="text-gray-600 truncate max-w-[100px]" title="${sektor}">${sektor}</span>
-        <span class="font-semibold text-gray-800">${formatRupiah(data.kerusakan)}</span>
+        <span class="font-semibold text-gray-800">${formatRupiah(typeof data === 'number' ? data : data.kerusakan)}</span>
       </div>
     `
     )
@@ -760,11 +785,13 @@ const TAB_DATA_SOURCES = {
       { key: 'bencana', label: 'Data Profil Desa', fetch: () => fetchAPI('/realtime/bencana') },
       { key: 'clusterData', label: 'Data IDM & Program', fetch: () => fetchClusterData() },
       { key: 'pertanianData', label: 'Data Program Pembangunan', fetch: () => fetchPertanianData() },
+      { key: 'pendudukData', label: 'Data APBDes', fetch: () => fetchPendudukData() },
     ],
     process: (results) => {
       const clusterData = results.clusterData;
       const cluster6Data = clusterData?.cluster6 || [];
       const clusterSummary = calculateClusterSummary(cluster6Data);
+      const pendudukData = results.pendudukData;
 
       Object.assign(state.data, {
         bencana: results.bencana,
@@ -774,6 +801,11 @@ const TAB_DATA_SOURCES = {
         clusterSummary: clusterSummary,
         pertanian: results.pertanianData?.data || [],
         pertanianSummary: results.pertanianData?.summary || {},
+        penduduk: pendudukData?.penduduk || [],
+        pendudukKK: pendudukData?.penduduk_kk || [],
+        pendudukDisabilitas: pendudukData?.penduduk_disabilitas || [],
+        pendudukUmur: pendudukData?.penduduk_umur || [],
+        pendudukSummary: pendudukData?.summary || null,
       });
     }
   },
@@ -833,9 +865,11 @@ const TAB_DATA_SOURCES = {
   },
   pengungsi: {
     sources: [
-      { key: 'bencana', label: 'Data Bencana', fetch: () => fetchAPI('/realtime/bencana') },
-      { key: 'pendudukData', label: 'Data Penduduk', fetch: () => fetchPendudukData() },
-      { key: 'orangHilangData', label: 'Data Orang Hilang', fetch: () => fetchOrangHilangData() },
+      { key: 'bencana', label: 'Data Profil Desa', fetch: () => fetchAPI('/realtime/bencana') },
+      { key: 'pendudukData', label: 'Data Penduduk & APBDes', fetch: () => fetchPendudukData() },
+      { key: 'orangHilangData', label: 'Data Program Unggulan', fetch: () => fetchOrangHilangData() },
+      { key: 'poskoData', label: 'Data Titik Penting', fetch: () => fetchSupabaseEndpoint('posko', 'supabase:posko', true, 'default') },
+      { key: 'pertanianData', label: 'Data Program Pembangunan', fetch: () => fetchPertanianData() },
     ],
     process: (results) => {
       const pendudukData = results.pendudukData;
@@ -858,6 +892,9 @@ const TAB_DATA_SOURCES = {
         pendudukSummary: pendudukData?.summary || {},
         orangHilang: results.orangHilangData?.data || [],
         orangHilangSummary: results.orangHilangData?.summary || {},
+        posko: results.poskoData?.data || [],
+        pertanian: results.pertanianData?.data || [],
+        pertanianSummary: results.pertanianData?.summary || {},
       });
 
       // DEBUG: Log state setelah di-assign
@@ -1194,31 +1231,29 @@ function renderDampakCharts(data) {
     return;
   }
 
-  // Status Pie Chart
+  // Komposisi Penduduk – Pie Chart (Laki-laki vs Perempuan)
   const ctxStatus = document.getElementById('chartStatusDampak');
-  // if (!ctxStatus) return; // Removed to prevent skipping other charts
   if (state.charts.statusDampak) state.charts.statusDampak.destroy();
 
-  // Count status from data
-  let tanggap = 0,
-    siaga = 0,
-    normal = 0;
+  // Aggregate gender dari data dusun
+  let totalLaki = 0, totalPerempuan = 0;
   if (data.data) {
     data.data.forEach((item) => {
-      if (item.jiwa_terdampak > 10000) tanggap++;
-      else if (item.jiwa_terdampak > 1000) siaga++;
-      else normal++;
+      totalLaki     += Number(item.jumlah_penduduk) || Number(item.jiwa_terdampak) || 0;
     });
   }
+  // Gunakan nilai total dari summary jika tersedia
+  const laki     = data.total_kebun   || totalLaki;
+  const perempuan= data.total_tambak  || 0;
 
   if (ctxStatus) state.charts.statusDampak = new Chart(ctxStatus, {
     type: 'doughnut',
     data: {
-      labels: ['Tanggap Darurat', 'Siaga Darurat', 'Normal'],
+      labels: ['Laki-laki', 'Perempuan'],
       datasets: [
         {
-          data: [tanggap, siaga, normal],
-          backgroundColor: ['#ef4444', '#f59e0b', '#10b981'],
+          data: [laki, perempuan],
+          backgroundColor: ['#3b82f6', '#ec4899'],
         },
       ],
     },
@@ -1234,24 +1269,24 @@ function renderDampakCharts(data) {
     },
   });
 
-  // Top Wilayah Bar Chart
+  // Penduduk per Dusun – Bar Chart
   const ctxTop = document.getElementById('chartTopWilayah');
-  // if (!ctxTop) return;
   if (state.charts.topWilayah) state.charts.topWilayah.destroy();
 
   const sorted = [...(data.data || [])]
-    .sort((a, b) => (b.jiwa_terdampak || 0) - (a.jiwa_terdampak || 0))
+    .sort((a, b) => (b.jumlah_penduduk || b.jiwa_terdampak || 0) - (a.jumlah_penduduk || a.jiwa_terdampak || 0))
     .slice(0, 5);
 
   if (ctxTop) state.charts.topWilayah = new Chart(ctxTop, {
     type: 'bar',
     data: {
-      labels: sorted.map((d) => getKabupatenLabel(d)),
+      labels: sorted.map((d) => d.nama_dusun || getKabupatenLabel(d)),
       datasets: [
         {
-          label: 'Korban',
-          data: sorted.map((d) => d.jiwa_terdampak),
-          backgroundColor: '#dc2626',
+          label: 'Penduduk',
+          data: sorted.map((d) => d.jumlah_penduduk || d.jiwa_terdampak || 0),
+          backgroundColor: '#3b82f6',
+          borderRadius: 4,
         },
       ],
     },
@@ -1277,22 +1312,29 @@ function addDampakBencanaMarkers() {
     state.layers.bencanaPoints.clearLayers();
   }
 
+  // Warna marker per status dusun
+  const statusColor = { normal: '#10b981', warning: '#f59e0b', critical: '#ef4444' };
+
   state.data.bencana.data.forEach((item) => {
     const coords = getMarkerCoords(item);
     if (!coords) return;
 
-    const icon = createMarkerIcon('#dc2626', 'fa-exclamation-triangle');
+    const color = statusColor[item.status] || '#3b82f6';
+    const icon  = createMarkerIcon(color, 'fa-home');
+
     L.marker(coords, { icon })
       .bindPopup(`
-        <div class="popup-header">
-          <strong><i class="fas fa-exclamation-triangle mr-2"></i>${item.jenis_bencana || 'Bencana'}</strong>
+        <div class="popup-header" style="background:linear-gradient(135deg,#1e40af,#3b82f6);color:white;padding:8px 12px;margin:-8px -12px 8px;border-radius:8px 8px 0 0">
+          <strong><i class="fas fa-home mr-2"></i>${item.nama_dusun || 'Dusun'}</strong>
         </div>
-        <div class="popup-body">
-          <p><strong>Wilayah:</strong> ${getWilayahNameForCoords(item) || '-'}</p>
-          <p><strong>Kecamatan:</strong> ${item.kecamatan || '-'}</p>
+        <div class="popup-body" style="font-size:12px">
           <p><strong>Desa:</strong> ${item.desa || '-'}</p>
-          <p><strong>Pengungsi:</strong> ${formatNumber(item.pengungsi || 0)}</p>
-          <p><strong>Status:</strong> ${item.status || '-'}</p>
+          <p><strong>Kecamatan:</strong> ${item.kecamatan || '-'}</p>
+          <p><strong>Kabupaten:</strong> ${item.kabupaten_kota || '-'}</p>
+          <hr style="margin:6px 0">
+          <p><strong>Jumlah Penduduk:</strong> ${formatNumber(item.jumlah_penduduk || item.jiwa_terdampak || 0)} jiwa</p>
+          <p><strong>Jumlah KK:</strong> ${formatNumber(item.jumlah_kk || item.pengungsi || 0)} KK</p>
+          <p><strong>Luas Wilayah:</strong> ${formatNumber(item.luas_ha || item.sawah_ha || 0)} Ha</p>
         </div>
       `)
       .addTo(state.layers.bencanaPoints);
@@ -1605,22 +1647,22 @@ function addMapLegend(map) {
     const div = L.DomUtil.create('div', 'map-legend');
     div.innerHTML = `
       <div style="background: white; padding: 8px 10px; border-radius: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.15); font-size: 10px; line-height: 1.4;">
-        <div style="font-weight: 600; margin-bottom: 6px; color: #374151;">Status Wilayah</div>
+        <div style="font-weight: 600; margin-bottom: 6px; color: #374151;">Status Dusun</div>
         <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 3px;">
-          <span style="width: 12px; height: 12px; background: #dc2626; border-radius: 2px; display: inline-block;"></span>
-          <span style="color: #374151;">Terdampak Berat</span>
+          <span style="width: 12px; height: 12px; background: #10b981; border-radius: 50%; display: inline-block;"></span>
+          <span style="color: #374151;">Normal / Aktif</span>
         </div>
         <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 3px;">
-          <span style="width: 12px; height: 12px; background: #f59e0b; border-radius: 2px; display: inline-block;"></span>
-          <span style="color: #374151;">Terdampak Sedang</span>
+          <span style="width: 12px; height: 12px; background: #f59e0b; border-radius: 50%; display: inline-block;"></span>
+          <span style="color: #374151;">Perlu Perhatian</span>
         </div>
         <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 3px;">
-          <span style="width: 12px; height: 12px; background: #22c55e; border-radius: 2px; display: inline-block;"></span>
-          <span style="color: #374151;">Aman / Ringan</span>
+          <span style="width: 12px; height: 12px; background: #ef4444; border-radius: 50%; display: inline-block;"></span>
+          <span style="color: #374151;">Kritis</span>
         </div>
         <div style="display: flex; align-items: center; gap: 6px;">
-          <span style="width: 12px; height: 12px; background: #9ca3af; border-radius: 2px; display: inline-block;"></span>
-          <span style="color: #6b7280;">Tidak ada data</span>
+          <span style="width: 12px; height: 12px; background: #3b82f6; border-radius: 50%; display: inline-block;"></span>
+          <span style="color: #6b7280;">Dusun</span>
         </div>
       </div>
     `;
@@ -3633,56 +3675,63 @@ function renderPengungsiChartsFiltered(disabilitasFiltered) {
     },
   });
 
-  // Disability Chart
+  // Chart 1 – Sumber Dana APBDes (Pie)
   const ctxDisabilitas = document.getElementById('chartDisabilitas');
   if (state.charts.disabilitas) state.charts.disabilitas.destroy();
 
-  const disabilitasAgg = {
-    Fisik: 0,
-    'Netra/Buta': 0,
-    'Rungu/Wicara': 0,
-    'Mental/Jiwa': 0,
-    'Fisik & Mental': 0,
-    Lainnya: 0,
-  };
-
-  disabilitasFiltered.forEach((d) => {
-    disabilitasAgg['Fisik'] += Number(d.DISABILITAS_FISIK_JML) || 0;
-    disabilitasAgg['Netra/Buta'] += Number(d.DISABILITAS_NETRA_BUTA_JML) || 0;
-    disabilitasAgg['Rungu/Wicara'] +=
-      Number(d.DISABILITAS_RUNGU_WICARA_JML) || 0;
-    disabilitasAgg['Mental/Jiwa'] += Number(d.DISABILITAS_MENTAL_JIWA_JML) || 0;
-    disabilitasAgg['Fisik & Mental'] +=
-      Number(d.DISABILITAS_FISIK_DAN_MENTAL_JML) || 0;
-    disabilitasAgg['Lainnya'] += Number(d.DISABILITAS_LAINNYA_JML) || 0;
-  });
+  const disabilitasRaw = state.data.pendudukDisabilitas || [];
+  // disabilitasRaw berisi: Dana Desa, ADD, PAD (DISABILITAS_FISIK_JML = nilainya)
+  const sumberLabels = disabilitasRaw.map(d => d.wilayah || '-');
+  const sumberValues = disabilitasRaw.map(d => Number(d.DISABILITAS_FISIK_JML) || 0);
 
   if (ctxDisabilitas) state.charts.disabilitas = new Chart(ctxDisabilitas, {
     type: 'doughnut',
     data: {
-      labels: Object.keys(disabilitasAgg),
-      datasets: [
-        {
-          data: Object.values(disabilitasAgg),
-          backgroundColor: [
-            '#dc2626',
-            '#f59e0b',
-            '#10b981',
-            '#3b82f6',
-            '#8b5cf6',
-            '#6b7280',
-          ],
-        },
-      ],
+      labels: sumberLabels.length ? sumberLabels : ['Dana Desa', 'ADD', 'PAD'],
+      datasets: [{
+        data: sumberValues.length ? sumberValues : [912500000, 467000000, 52750000],
+        backgroundColor: ['#3b82f6', '#10b981', '#f59e0b'],
+      }],
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        legend: {
-          position: 'bottom',
-          labels: { boxWidth: 10, font: { size: 10 } },
-        },
+        legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } },
+      },
+    },
+  });
+
+  // Chart 2 – Pagu per Bidang APBDes (Bar)
+  const ctxKK = document.getElementById('chartKK');
+  if (state.charts.kk) state.charts.kk.destroy();
+
+  // pendudukKK level 1 = Bidang APBDes
+  const bidangData = (state.data.pendudukKK || []).filter(d => d.level === 1);
+  const bidangLabels = bidangData.map(d =>
+    (d.wilayah || d.nama || '-').replace('Penyelenggaraan Pemerintahan Desa', 'Pemerintahan')
+      .replace('Penanggulangan Bencana & Darurat', 'Darurat')
+  );
+  const bidangValues = bidangData.map(d => d.jumlah || 0);
+
+  if (ctxKK) state.charts.kk = new Chart(ctxKK, {
+    type: 'bar',
+    data: {
+      labels: bidangLabels,
+      datasets: [{
+        label: 'Pagu (Rp)',
+        data: bidangValues,
+        backgroundColor: ['#3b82f6','#10b981','#f59e0b','#8b5cf6','#ef4444'],
+        borderRadius: 4,
+      }],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { maxRotation: 30, minRotation: 0, font: { size: 9 } } },
+        y: { beginAtZero: true, ticks: { callback: v => 'Rp ' + (v/1000000).toFixed(0) + 'jt' } },
       },
     },
   });
@@ -3972,7 +4021,7 @@ function renderOrangHilangSlider() {
   if (data.length === 0) {
     cardsContainer.innerHTML = `
       <div class="flex-shrink-0 w-full h-full flex items-center justify-center text-gray-400 text-sm">
-        <i class="fas fa-check-circle mr-2 text-green-500"></i>Tidak ada data orang hilang
+        <i class="fas fa-seedling mr-2 text-green-500"></i>Tidak ada program unggulan
       </div>
     `;
     if (prevBtn) prevBtn.disabled = true;
@@ -3981,35 +4030,51 @@ function renderOrangHilangSlider() {
     return;
   }
 
-  // Generate cards
-  cardsContainer.innerHTML = data.map((person, idx) => {
-    const photoUrl = person.missingPersonPhotosUrl?.[0] || null;
-    const statusClass = person.missingPersonStatus === 'Found'
-      ? 'bg-green-100 text-green-700'
-      : 'bg-yellow-100 text-yellow-700';
-    const statusText = person.missingPersonStatus === 'Found' ? 'Ditemukan' : 'Dicari';
+  // Generate cards – tampilkan Program Unggulan Desa
+  const bidangIcon = {
+    'Ekonomi':        'fa-store',
+    'Kesehatan':      'fa-heartbeat',
+    'Infrastruktur':  'fa-road',
+    'Pemerintahan':   'fa-landmark',
+    'Pertanian':      'fa-seedling',
+  };
+  const statusClass2Color = {
+    'selesai':  'bg-green-100 text-green-700',
+    'berjalan': 'bg-blue-100 text-blue-700',
+    'rencana':  'bg-yellow-100 text-yellow-700',
+  };
+
+  cardsContainer.innerHTML = data.map((prog) => {
+    const icon       = bidangIcon[prog.bidang || prog.district] || 'fa-tasks';
+    const sClass     = statusClass2Color[prog.status] || 'bg-gray-100 text-gray-600';
+    const statusLbl  = prog.status === 'selesai' ? 'Selesai'
+                     : prog.status === 'berjalan' ? 'Berjalan'
+                     : 'Rencana';
+    const namaProg   = prog.missingPersonName || prog.nama || '-';
+    const bidangProg = prog.bidang || prog.district || '-';
+    const anggaran   = prog.anggaran  ? formatRupiah(prog.anggaran)  : '-';
+    const realisasi  = prog.realisasi ? formatRupiah(prog.realisasi) : '-';
+    const keterangan = prog.keterangan || prog.description || '-';
 
     return `
       <div class="flex-shrink-0 w-full h-full p-2">
         <div class="bg-white border rounded-lg shadow-sm h-full flex gap-3 p-3">
-          <div class="flex-shrink-0">
-            ${photoUrl
-              ? `<img src="${photoUrl}" alt="${person.missingPersonName}" class="w-20 h-24 object-cover rounded-lg border" onerror="this.onerror=null;this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect fill=%22%23f3f4f6%22 width=%22100%22 height=%22100%22/><text x=%2250%22 y=%2255%22 font-size=%2240%22 text-anchor=%22middle%22 fill=%22%239ca3af%22>?</text></svg>';">`
-              : `<div class="w-20 h-24 bg-gray-100 rounded-lg flex items-center justify-center"><i class="fas fa-user text-3xl text-gray-300"></i></div>`
-            }
+          <div class="flex-shrink-0 w-14 h-14 rounded-xl flex items-center justify-center"
+               style="background:linear-gradient(135deg,#1e40af,#3b82f6)">
+            <i class="fas ${icon} text-white text-xl"></i>
           </div>
           <div class="flex-1 min-w-0">
             <div class="flex items-start justify-between gap-2 mb-1">
-              <h4 class="font-semibold text-sm text-gray-800 truncate">${person.missingPersonName || 'Tidak diketahui'}</h4>
-              <span class="px-2 py-0.5 ${statusClass} rounded text-xs whitespace-nowrap">${statusText}</span>
+              <h4 class="font-semibold text-sm text-gray-800 leading-tight">${namaProg}</h4>
+              <span class="px-2 py-0.5 ${sClass} rounded text-xs whitespace-nowrap">${statusLbl}</span>
             </div>
             <div class="space-y-1 text-xs text-gray-600">
-              <div class="flex gap-2">
-                <span><i class="fas fa-calendar-alt text-gray-400 mr-1"></i>${person.missingPersonAge || '-'} thn</span>
-                <span><i class="fas fa-venus-mars text-gray-400 mr-1"></i>${person.missingPersonGender === 'Male' ? 'Pria' : person.missingPersonGender === 'Female' ? 'Wanita' : '-'}</span>
+              <div><i class="fas fa-tag text-gray-400 mr-1"></i>${bidangProg}</div>
+              <div class="truncate" title="${keterangan}"><i class="fas fa-info-circle text-gray-400 mr-1"></i>${keterangan}</div>
+              <div class="flex gap-3">
+                <span><i class="fas fa-wallet text-gray-400 mr-1"></i>${anggaran}</span>
+                <span class="text-green-600 font-medium"><i class="fas fa-check text-green-500 mr-1"></i>${realisasi}</span>
               </div>
-              <div class="truncate"><i class="fas fa-map-marker-alt text-gray-400 mr-1"></i>${person.district || person.regency || '-'}</div>
-              <div class="truncate"><i class="fas fa-phone text-gray-400 mr-1"></i>${person.reporterPhone || '-'}</div>
             </div>
           </div>
         </div>
@@ -4215,57 +4280,45 @@ function renderPengungsiCharts() {
 
 function renderPengungsiTable() {
   const tbody = document.getElementById('tablePengungsi');
+  if (!tbody) return;
 
-  // Combine penduduk level 2 with pengungsi data from bencana
-  const pendudukData = (state.data.penduduk || []).filter(
-    (row) => row.level === 2
-  );
-  const bencanaData = state.data.bencana?.data || [];
+  // Tampilkan program pembangunan per dusun dari data pertanian
+  const pertanian = state.data.pertanian || [];
 
-  // Create lookup for pengungsi by kabupaten
-  const pengungsiLookup = {};
-  bencanaData.forEach((b) => {
-    const kab = (b.kabupaten || '').toUpperCase();
-    if (!pengungsiLookup[kab])
-      pengungsiLookup[kab] = { pengungsi: 0, titik: 0 };
-    pengungsiLookup[kab].pengungsi += Number(b.pengungsi) || 0;
-    pengungsiLookup[kab].titik += Number(b.titik_pengungsian) || 0;
-  });
+  if (pertanian.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-gray-400">Tidak ada data program pembangunan</td></tr>';
+    return;
+  }
 
-  // Get KK data for each kabkota
-  const kkLookup = {};
-  (state.data.pendudukKK || [])
-    .filter((k) => k.level === 2)
-    .forEach((k) => {
-      kkLookup[k.kode] = k.jumlah || 0;
-    });
+  const kondisiLabel = { rusak_berat: 'Berat', rusak_sedang: 'Sedang', rusak_ringan: 'Ringan', baik: 'Baik' };
 
-  tbody.innerHTML = pendudukData
-    .slice(0, 23)
-    .map((row) => {
-      const wilayah = row.wilayah || row.nama || '-';
-      const wilayahUpper = wilayah.toUpperCase();
-      const pengungsi = pengungsiLookup[wilayahUpper] || {
-        pengungsi: 0,
-        titik: 0,
-      };
-      const kk = kkLookup[row.kode] || 0;
-
-      return `
-                <tr class="border-b hover:bg-gray-50">
-                    <td class="p-3 font-medium">${wilayah}</td>
-                    <td class="p-3 text-right">${formatNumber(row.jumlah || 0)}</td>
-                    <td class="p-3 text-right">${formatNumber(kk)}</td>
-                    <td class="p-3 text-right">${formatNumber(pengungsi.pengungsi)}</td>
-                </tr>
-            `;
-    })
-    .join('');
+  tbody.innerHTML = pertanian.map((item) => {
+    const pagu      = Number(item.taksir_kerugian) || 0;
+    const kondisi   = item.kerusakan_berat > 0 ? 'Berat'
+                    : item.kerusakan_sedang > 0 ? 'Sedang'
+                    : item.kerusakan_ringan > 0 ? 'Ringan' : 'Baik';
+    const badgeColor = kondisi === 'Berat'   ? 'bg-red-100 text-red-700'
+                     : kondisi === 'Sedang'  ? 'bg-yellow-100 text-yellow-700'
+                     : kondisi === 'Ringan'  ? 'bg-orange-100 text-orange-700'
+                     : 'bg-green-100 text-green-700';
+    return `
+      <tr class="border-b hover:bg-gray-50">
+        <td class="p-3 font-medium text-sm">${item.nama || '-'}</td>
+        <td class="p-3 text-sm text-gray-600">${item.jenis || '-'}</td>
+        <td class="p-3 text-right text-sm">${formatRupiah(pagu)}</td>
+        <td class="p-3 text-center">
+          <span class="px-2 py-0.5 rounded text-xs ${badgeColor}">${kondisi}</span>
+        </td>
+      </tr>
+    `;
+  }).join('');
 }
 
 function initPengungsiMap() {
   if (state.maps.pengungsi) {
     state.maps.pengungsi.invalidateSize();
+    // Refresh markers jika peta sudah ada
+    addPembangunanMarkers();
     return;
   }
 
@@ -4279,29 +4332,75 @@ function initPengungsiMap() {
     maxZoom: 19,
   }).addTo(state.maps.pengungsi);
 
-  // Add pengungsi markers from bencana data
-  if (state.data.bencana?.data) {
-    state.data.bencana.data.forEach((item) => {
-      const coords = getBencanaMarkerCoords(item);
-      if (!coords || !item.pengungsi) return;
+  addPembangunanMarkers();
+}
 
-      const icon = createMarkerIcon('#8b5cf6', 'fa-users');
-      L.marker(coords, { icon })
-        .bindPopup(
-          `
-                            <div class="popup-header">
-                                <strong><i class="fas fa-users mr-2"></i>Pengungsi</strong>
-                            </div>
-                            <div class="popup-body">
-                                <p><strong>Kabupaten:</strong> ${getWilayahNameForCoords(item)}</p>
-                                <p><strong>Pengungsi:</strong> ${formatNumber(item.pengungsi)}</p>
-                                <p><strong>Titik:</strong> ${formatNumber(item.titik_pengungsian)}</p>
-                            </div>
-                        `
-        )
-        .addTo(state.maps.pengungsi);
-    });
+function addPembangunanMarkers() {
+  if (!state.maps.pengungsi) return;
+
+  // Hapus layer lama jika ada
+  if (state.layers.pembangunan) {
+    state.maps.pengungsi.removeLayer(state.layers.pembangunan);
   }
+  state.layers.pembangunan = L.layerGroup().addTo(state.maps.pengungsi);
+
+  // Marker program pembangunan dari data pertanian (program per dusun)
+  const pertanian = state.data.pertanian || [];
+  const jenisColor = {
+    'Infrastruktur':  '#3b82f6',
+    'Kesehatan':      '#10b981',
+    'Pendidikan':     '#f59e0b',
+    'Sanitasi':       '#8b5cf6',
+    'Penerangan':     '#eab308',
+    'Air Bersih':     '#06b6d4',
+    'Pertanian':      '#22c55e',
+  };
+
+  pertanian.forEach((item) => {
+    const coords = item.lat && item.lng ? [item.lat, item.lng] : null;
+    if (!coords) return;
+
+    const color = jenisColor[item.jenis] || '#6b7280';
+    const icon  = createMarkerIcon(color, 'fa-hard-hat');
+    const pagu  = formatRupiah(Number(item.taksir_kerugian) || 0);
+
+    L.marker(coords, { icon })
+      .bindPopup(`
+        <div class="popup-header" style="background:linear-gradient(135deg,#1e3a8a,#3b82f6);color:white;padding:8px 12px;margin:-8px -12px 8px;border-radius:8px 8px 0 0">
+          <strong><i class="fas fa-hard-hat mr-2"></i>${item.jenis || 'Program'}</strong>
+        </div>
+        <div class="popup-body" style="font-size:12px">
+          <p><strong>Program:</strong> ${item.nama || '-'}</p>
+          <p><strong>Desa:</strong> ${item.desa || '-'}</p>
+          <p><strong>Volume:</strong> ${item.volume || '-'} ${item.satuan || ''}</p>
+          <hr style="margin:6px 0">
+          <p><strong>Anggaran:</strong> ${pagu}</p>
+        </div>
+      `)
+      .addTo(state.layers.pembangunan);
+  });
+
+  // Marker titik penting desa dari posko data
+  const posko = state.data.posko || [];
+  posko.forEach((item) => {
+    const lat = item.latitude || item.lat;
+    const lng = item.longitude || item.lng;
+    if (!lat || !lng) return;
+
+    const icon = createMarkerIcon('#f97316', 'fa-map-marker-alt');
+    L.marker([lat, lng], { icon })
+      .bindPopup(`
+        <div class="popup-header" style="background:linear-gradient(135deg,#7c2d12,#f97316);color:white;padding:8px 12px;margin:-8px -12px 8px;border-radius:8px 8px 0 0">
+          <strong><i class="fas fa-map-marker-alt mr-2"></i>${item.type || 'Titik'}</strong>
+        </div>
+        <div class="popup-body" style="font-size:12px">
+          <p><strong>Nama:</strong> ${item.nama || item.name || '-'}</p>
+          <p><strong>Alamat:</strong> ${item.alamat || item.address || '-'}</p>
+          <p><strong>Kapasitas:</strong> ${formatNumber(item.kapasitas || item.capacity || 0)}</p>
+        </div>
+      `)
+      .addTo(state.layers.pembangunan);
+  });
 }
 
 // =====================================================
