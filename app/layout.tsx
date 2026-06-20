@@ -2,9 +2,15 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
+<<<<<<< HEAD
   title: "Dashboard System Informasi",
   description: "Sistem Informasi",
   keywords: "Dashboard System Informasi",
+=======
+  title: "Dashboard Spasial",
+  description: "Sistem Informasi Spasial",
+  keywords: "Spasial, dashboard",
+>>>>>>> d8eb873f84f1f064b7467f1add856663b48b09e1
 };
 
 export default function RootLayout({
