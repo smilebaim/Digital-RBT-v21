@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Dashboard Monitoring Bencana Aceh",
-  description: "Sistem Informasi Aceh Tanggap Bencana - Dashboard Monitoring Bencana Hidrometeorologi Aceh",
-  keywords: "bencana, aceh, monitoring, hidrometeorologi, dashboard",
+  title: "Dashboard Spasial",
+  description: "Sistem Informasi Spasial",
+  keywords: "Spasial, dashboard",
 };
 
 export default function RootLayout({
