@@ -24,38 +24,20 @@ export default function BottomNav() {
       if (typeof switchTab === 'function') {
         switchTab(tabId);
       }
-      // Ganti URL query tanpa full-reload (Next.js shallow push)
       router.push(`/dashboard?tab=${tabId}`, { scroll: false });
     } else {
-      // Dari halaman lain → navigasi ke dashboard dengan tab yang dipilih
-      router.push(`/dashboard?tab=${tabId}`);
+      // Dari halaman lain → gunakan full reload agar script legacy di dashboard berjalan sempurna
+      window.location.href = `/dashboard?tab=${tabId}`;
     }
   };
 
   return (
-    <nav
-      style={{
-        position: 'fixed',
-        bottom: 16,
-        left: '50%',
-        transform: 'translateX(-50%)',
-        zIndex: 99999,
-        pointerEvents: 'none',
-      }}
-    >
-      <div
+    <nav className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[99999] pointer-events-none w-[95%] sm:w-auto max-w-[500px]">
+      <div 
+        className="bg-[#121212eb] border border-white/10 rounded-full p-2 flex items-center justify-between shadow-2xl pointer-events-auto"
         style={{
-          background: 'rgba(18, 18, 18, 0.92)',
           backdropFilter: 'blur(20px)',
           WebkitBackdropFilter: 'blur(20px)',
-          border: '1px solid rgba(255,255,255,0.10)',
-          borderRadius: 50,
-          padding: '7px 8px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 2,
-          boxShadow: '0 8px 32px rgba(0,0,0,0.45), 0 2px 8px rgba(0,0,0,0.3)',
-          pointerEvents: 'all',
         }}
       >
         {TABS.map((tab) => {
@@ -63,40 +45,15 @@ export default function BottomNav() {
           return (
             <button
               key={tab.id}
-              id={`global-nav-${tab.id}`}
               onClick={() => handleClick(tab.id)}
-              title={tab.label}
-              style={{
-                background: isActive ? '#1a5c2e' : 'transparent',
-                border: 'none',
-                cursor: 'pointer',
-                borderRadius: 40,
-                padding: '9px 16px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 7,
-                color: isActive ? '#fff' : 'rgba(255,255,255,0.52)',
-                transition: 'background 0.18s, color 0.18s, transform 0.12s',
-                fontFamily: 'Inter, sans-serif',
-                outline: 'none',
-              }}
-              onMouseEnter={(e) => {
-                if (!isActive) {
-                  e.currentTarget.style.background = 'rgba(255,255,255,0.10)';
-                  e.currentTarget.style.color = 'rgba(255,255,255,0.9)';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!isActive) {
-                  e.currentTarget.style.background = 'transparent';
-                  e.currentTarget.style.color = 'rgba(255,255,255,0.52)';
-                }
-              }}
+              className={`flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 px-3 py-2 sm:px-5 sm:py-2.5 rounded-full transition-all duration-200 outline-none flex-1 sm:flex-none ${
+                isActive
+                  ? 'bg-[#1a5c2e] text-white'
+                  : 'bg-transparent text-white/50 hover:bg-white/10 hover:text-white/90'
+              }`}
             >
-              <i className={`fas ${tab.icon}`} style={{ fontSize: 15, lineHeight: 1 }} />
-              <span style={{ fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap' }}>
-                {tab.label}
-              </span>
+              <i className={`fas ${tab.icon} text-[16px] sm:text-[15px]`}></i>
+              <span className="text-[10px] sm:text-xs font-semibold whitespace-nowrap">{tab.label}</span>
             </button>
           );
         })}
