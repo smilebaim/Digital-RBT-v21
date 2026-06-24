@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import './dashboard.css';
 
 const scriptLoadCache = new Map<string, Promise<void>>();
@@ -80,8 +81,31 @@ async function loadDashboardScripts() {
 }
 
 export default function DashboardClient() {
+  const searchParams = useSearchParams();
 
+  // ── Sembunyikan nav bawaan dashboard (diganti oleh global BottomNav) ──
+  useEffect(() => {
+    // Hide mobile overlay & drawer
+    const mobileOverlay = document.getElementById('mobileMenuOverlay');
+    const mobileDrawer  = document.getElementById('mobileMenuDrawer');
+    const mobileBtn     = document.getElementById('mobileMenuBtn');
+    if (mobileOverlay) mobileOverlay.style.display = 'none';
+    if (mobileDrawer)  mobileDrawer.style.display  = 'none';
+    if (mobileBtn)     mobileBtn.style.display      = 'none';
 
+    // Hide tab bar (3 levels up dari #tab-dampak: button → flex-div → container → sticky-wrapper)
+    const tabDampak = document.getElementById('tab-dampak');
+    if (tabDampak) {
+      const tabBar = tabDampak.parentElement?.parentElement?.parentElement as HTMLElement | null;
+      if (tabBar) tabBar.style.display = 'none';
+    }
+
+    // Tambah padding bawah pada main agar tidak tertutup global nav
+    const mainEl = document.querySelector('main') as HTMLElement | null;
+    if (mainEl) mainEl.style.paddingBottom = '84px';
+  }, []); // run once on mount
+
+  // ── Load scripts & auto-switch tab dari URL param ──
   useEffect(() => {
     // Expose stubs to prevent ReferenceError before scripts load
     const stubs = [
@@ -104,8 +128,24 @@ export default function DashboardClient() {
         throw e;
       });
     }
+
+    // Auto-switch tab berdasarkan ?tab= dari URL
+    const requestedTab = searchParams?.get('tab');
+    const validTabs = ['dampak', 'peta-operasi', 'pengungsi', 'bantuan'];
+    if (requestedTab && validTabs.includes(requestedTab)) {
+      dashboardScriptsPromise?.then(() => {
+        setTimeout(() => {
+          const switchTab = (window as any).switchTab;
+          if (typeof switchTab === 'function') {
+            switchTab(requestedTab);
+          }
+        }, 300);
+      });
+    }
+
     void dashboardScriptsPromise;
-  }, []);
+  }, [searchParams]);
 
   return <div dangerouslySetInnerHTML={{ __html: HTML_CONTENT }} />;
 }
+

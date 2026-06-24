@@ -1,5 +1,7 @@
-import DashboardWrapper from './DashboardWrapper';
+import LandingWrapper from './LandingWrapper';
 
 export default function Page() {
-  return <DashboardWrapper />;
+  return <LandingWrapper />;
 }
+
+
