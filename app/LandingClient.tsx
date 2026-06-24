@@ -67,11 +67,11 @@ export default function LandingClient() {
     <div className="landing-root">
       {/* ── Dark header ── */}
       <header className="map-header">
-        <div className="map-header-content">
-          <span className="pulse-dot" />
+        <div className="map-header-content" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <img src="https://desaremaubakotuo.netlify.app/lovable-uploads/logo-desa.png" alt="Logo Desa Remau Bako Tuo" style={{ height: '36px', width: 'auto' }} />
           <div>
             <div className="map-header-title">DESA REMAU BAKO TUO</div>
-            <div className="map-header-subtitle">↗ PORTAL DIGITAL WILAYAH</div>
+            <div className="map-header-subtitle">KABUPATEN TANJUNG JABUNG TIMUR</div>
           </div>
         </div>
         <a href="/dashboard" className="map-header-btn" title="Buka Dashboard">
