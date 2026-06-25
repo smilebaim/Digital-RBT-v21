@@ -114,7 +114,7 @@ export default function BottomNav() {
       {/* ══ BOTTOM NAV ══ */}
       <nav className="fixed bottom-3 sm:bottom-5 left-1/2 -translate-x-1/2 z-[99999] pointer-events-none w-[90%] sm:w-auto max-w-[400px] sm:max-w-[680px]">
         <div
-          className="bg-gradient-to-r from-primary-700/50 via-primary-600/50 to-primary-700/50 border border-white/30 rounded-full p-1.5 flex items-center justify-between shadow-2xl pointer-events-auto sm:gap-1"
+          className="bg-gradient-to-r from-primary-900/70 via-primary-800/65 to-primary-900/70 border border-white/20 rounded-full p-1.5 flex items-center justify-between shadow-2xl pointer-events-auto sm:gap-1"
           style={{ backdropFilter: 'blur(25px)', WebkitBackdropFilter: 'blur(25px)' }}
         >
           {TABS.map((tab) => {
@@ -125,22 +125,29 @@ export default function BottomNav() {
                 onClick={() => handleClick(tab.id)}
                 title={tab.label}
                 style={isActive ? { background: '#ffffff', color: tab.color, borderColor: tab.border } : {}}
-                className={`flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 px-2.5 py-1 sm:px-5 sm:py-2.5 rounded-full transition-all duration-200 outline-none flex-1 sm:flex-none border ${
+                className={`flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 px-2.5 py-1 sm:px-5 sm:py-2.5 rounded-full transition-all duration-200 outline-none flex-1 sm:flex-none border ${
                   isActive 
                     ? 'shadow-md' 
-                    : 'bg-transparent text-white/85 hover:bg-white/10 hover:text-white border-transparent'
+                    : 'bg-transparent text-white hover:bg-white/10 border-transparent'
                 }`}
               >
                 <span 
                   className="text-[17px] sm:text-[19px] leading-none flex items-center justify-center" 
                   style={{ 
-                    opacity: isActive ? 1 : 0.85,
+                    opacity: 1,
+                    filter: isActive ? 'none' : 'drop-shadow(0 1px 2px rgba(0,0,0,0.5))',
                     transition: 'transform 0.15s, opacity 0.15s' 
                   }}
                 >
                   {tab.icon}
                 </span>
-                <span className="text-[10px] sm:text-[12px] font-semibold whitespace-nowrap" style={{ color: isActive ? tab.color : 'inherit' }}>
+                <span 
+                  className="text-[10.5px] sm:text-[12.5px] font-bold whitespace-nowrap" 
+                  style={{ 
+                    color: isActive ? tab.color : '#ffffff',
+                    textShadow: isActive ? 'none' : '0 1.5px 2.5px rgba(0, 0, 0, 0.7)'
+                  }}
+                >
                   {tab.label}
                 </span>
               </button>
@@ -211,7 +218,7 @@ export default function BottomNav() {
 
         {/* Drawer body */}
         <div style={{ padding: '16px 14px', overflowY: 'auto', flex: 1 }}>
-          <p style={{ fontSize: 10, fontWeight: 700, color: '#9ca3af', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 10, paddingLeft: 4 }}>
+          <p style={{ fontSize: 10, fontWeight: 700, color: '#4b5563', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 10, paddingLeft: 4 }}>
             Layanan Desa
           </p>
 
@@ -235,9 +242,9 @@ export default function BottomNav() {
               }}>{item.icon}</span>
               <span style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
                 <span style={{ fontSize: 14, fontWeight: 700, color: item.color, lineHeight: 1.2 }}>{item.label}</span>
-                <span style={{ fontSize: 11, color: '#6b7280', marginTop: 2 }}>{item.sub}</span>
+                <span style={{ fontSize: 11, color: '#374151', marginTop: 2 }}>{item.sub}</span>
               </span>
-              <svg width="14" height="14" fill="none" stroke="#d1d5db" strokeWidth="2" viewBox="0 0 24 24">
+              <svg width="14" height="14" fill="none" stroke="#9ca3af" strokeWidth="2" viewBox="0 0 24 24">
                 <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </a>
@@ -249,7 +256,7 @@ export default function BottomNav() {
             href="/dashboard"
             onClick={() => setDrawerOpen(false)}
             style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              display: 'flex', alignItems: 'center', justifycontent: 'center',
               gap: 8, width: '100%', padding: '12px 16px', borderRadius: 12,
               background: 'linear-gradient(135deg, #15803d, #16a34a)', color: '#fff',
               fontSize: 14, fontWeight: 700, textDecoration: 'none',
@@ -262,7 +269,7 @@ export default function BottomNav() {
 
         {/* Drawer footer */}
         <div style={{
-          padding: '12px 18px', fontSize: 10, color: '#9ca3af',
+          padding: '12px 18px', fontSize: 10, color: '#6b7280',
           textAlign: 'center', borderTop: '1px solid #e5e7eb',
           background: '#fff', flexShrink: 0,
         }}>
