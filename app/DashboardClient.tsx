@@ -53,7 +53,7 @@ const HTML_CONTENT = `
 
   <!-- Header -->
   <header
-    class="bg-gradient-to-r from-primary-700 via-primary-600 to-primary-700 text-white shadow-lg sticky top-0 z-50">
+    class="bg-gradient-to-r from-primary-700/50 via-primary-600/50 to-primary-700/50 text-white shadow-lg sticky top-0 z-50 backdrop-blur-xl border-b border-white/20">
     <div class="container-fluid px-2 md:px-4">
       <div class="flex items-center justify-between h-14 md:h-16">
         <!-- Logo & Title -->

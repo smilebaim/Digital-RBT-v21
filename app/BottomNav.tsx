@@ -114,7 +114,7 @@ export default function BottomNav() {
       {/* ══ BOTTOM NAV ══ */}
       <nav className="fixed bottom-3 sm:bottom-5 left-1/2 -translate-x-1/2 z-[99999] pointer-events-none w-[90%] sm:w-auto max-w-[400px] sm:max-w-[680px]">
         <div
-          className="bg-gradient-to-r from-primary-700/95 via-primary-600/95 to-primary-700/95 border border-white/20 rounded-full p-1 sm:p-1.5 flex items-center justify-between shadow-2xl pointer-events-auto sm:gap-1"
+          className="bg-gradient-to-r from-primary-700/50 via-primary-600/50 to-primary-700/50 border border-white/30 rounded-full p-1.5 flex items-center justify-between shadow-2xl pointer-events-auto sm:gap-1"
           style={{ backdropFilter: 'blur(25px)', WebkitBackdropFilter: 'blur(25px)' }}
         >
           {TABS.map((tab) => {

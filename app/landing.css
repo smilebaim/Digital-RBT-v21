@@ -20,8 +20,11 @@
   left: 0;
   right: 0;
   z-index: 1000;
-  background: linear-gradient(to right, #15803d, #16a34a, #15803d);
-  box-shadow: 0 2px 12px rgba(0,0,0,0.4);
+  background: linear-gradient(to right, rgba(21, 128, 61, 0.5), rgba(22, 163, 74, 0.5), rgba(21, 128, 61, 0.5));
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.25);
 }
 .land-header-inner {
   display: flex;
