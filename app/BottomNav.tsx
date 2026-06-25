@@ -256,7 +256,7 @@ export default function BottomNav() {
             href="/dashboard"
             onClick={() => setDrawerOpen(false)}
             style={{
-              display: 'flex', alignItems: 'center', justifycontent: 'center',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
               gap: 8, width: '100%', padding: '12px 16px', borderRadius: 12,
               background: 'linear-gradient(135deg, #15803d, #16a34a)', color: '#fff',
               fontSize: 14, fontWeight: 700, textDecoration: 'none',
