@@ -26,41 +26,197 @@ const SLIDES = [
   },
 ];
 
+/* ── Menu items drawer ──
+   Literasi  → tab Indeks      (?tab=indeks)
+   Ekonomi   → tab Pembangunan (?tab=pembangunan)
+   Layanan   → tab Profil      (?tab=profil)
+   Login     → /dashboard
+*/
+const DRAWER_MENU = [
+  {
+    label: 'Literasi',
+    sub: 'Data Indeks Desa Membangun',
+    href: '/dashboard?tab=indeks',
+    icon: '📚',
+    color: '#7c3aed',
+    bg: '#f5f3ff',
+    border: '#ddd6fe',
+  },
+  {
+    label: 'Ekonomi',
+    sub: 'Program & Anggaran Pembangunan',
+    href: '/dashboard?tab=pembangunan',
+    icon: '💰',
+    color: '#0369a1',
+    bg: '#f0f9ff',
+    border: '#bae6fd',
+  },
+  {
+    label: 'Layanan',
+    sub: 'Profil & Layanan Desa',
+    href: '/dashboard?tab=profil',
+    icon: '🛎️',
+    color: '#15803d',
+    bg: '#f0fdf4',
+    border: '#bbf7d0',
+  },
+];
+
 export default function LandingClient() {
   const [current, setCurrent] = useState(0);
   const [fade, setFade] = useState(true);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
-  // Auto-advance every 5 seconds
+  // Auto-advance slideshow every 5 seconds
   useEffect(() => {
-    const timer = setInterval(() => {
-      goTo((prev) => (prev + 1) % SLIDES.length);
-    }, 5000);
+    const timer = setInterval(goNext, 5000);
     return () => clearInterval(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const goTo = (indexOrUpdater: number | ((prev: number) => number)) => {
-    setFade(false);
-    setTimeout(() => {
-      setCurrent(indexOrUpdater as any);
-      setFade(true);
-    }, 350);
-  };
+  // Close drawer on Escape key
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setDrawerOpen(false);
+    };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, []);
 
   const goToIndex = (i: number) => {
     if (i === current) return;
     setFade(false);
-    setTimeout(() => {
-      setCurrent(i);
-      setFade(true);
-    }, 350);
+    setTimeout(() => { setCurrent(i); setFade(true); }, 350);
   };
 
-  const prev = () => goToIndex((current - 1 + SLIDES.length) % SLIDES.length);
-  const next = () => goToIndex((current + 1) % SLIDES.length);
+  const goNext = () => {
+    setFade(false);
+    setTimeout(() => { setCurrent(prev => (prev + 1) % SLIDES.length); setFade(true); }, 350);
+  };
+
+  const goPrev = () => {
+    setFade(false);
+    setTimeout(() => { setCurrent(prev => (prev - 1 + SLIDES.length) % SLIDES.length); setFade(true); }, 350);
+  };
 
   return (
     <div className="landing-root">
-      {/* ── Fullscreen Slideshow ── */}
+
+      {/* ══ HEADER ══ */}
+      <header className="land-header">
+        <div className="land-header-inner">
+
+          {/* Logo + Nama Desa */}
+          <a href="/" className="land-brand">
+            <img
+              src="https://desaremaubakotuo.netlify.app/lovable-uploads/logo-desa.png"
+              alt="Logo Desa Remau Bako Tuo"
+              className="land-brand-logo"
+            />
+            <div className="land-brand-text">
+              <span className="land-brand-title">Desa Remau Bako Tuo</span>
+              <span className="land-brand-sub">Kabupaten Tanjung Jabung Timur</span>
+            </div>
+          </a>
+
+          {/* Hamburger — Buka menu drawer */}
+          <button
+            className="bg-white/10 hover:bg-white/25 w-8 h-8 md:w-9 md:h-9 rounded-full flex items-center justify-center transition text-white border-none cursor-pointer outline-none"
+            onClick={() => setDrawerOpen(true)}
+            aria-label="Buka menu navigasi"
+            aria-expanded={drawerOpen}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="w-4.5 h-4.5">
+              <circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none" />
+              <circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none" />
+              <circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none" />
+            </svg>
+          </button>
+        </div>
+      </header>
+
+      {/* ══ DRAWER OVERLAY ══ */}
+      <div
+        className={`land-drawer-overlay ${drawerOpen ? 'land-drawer-overlay-open' : ''}`}
+        onClick={() => setDrawerOpen(false)}
+        aria-hidden="true"
+      />
+
+      {/* ══ DRAWER PANEL ══ */}
+      <div
+        className={`land-drawer ${drawerOpen ? 'land-drawer-open' : ''}`}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Menu navigasi"
+      >
+        {/* Drawer header */}
+        <div className="land-drawer-header">
+          <div className="land-drawer-header-brand">
+            <img
+              src="https://desaremaubakotuo.netlify.app/lovable-uploads/logo-desa.png"
+              alt="Logo"
+              className="land-drawer-header-logo"
+            />
+            <span>Menu</span>
+          </div>
+          <button
+            onClick={() => setDrawerOpen(false)}
+            className="land-drawer-close"
+            aria-label="Tutup menu"
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* Drawer body */}
+        <div className="land-drawer-body">
+          <p className="land-drawer-section-label">Layanan Desa</p>
+
+          {DRAWER_MENU.map(item => (
+            <a
+              key={item.href}
+              href={item.href}
+              className="land-drawer-item"
+              style={{
+                '--item-color': item.color,
+                '--item-bg': item.bg,
+                '--item-border': item.border,
+              } as React.CSSProperties}
+              onClick={() => setDrawerOpen(false)}
+            >
+              <span className="land-drawer-item-icon-wrap" style={{ background: item.bg, border: `1px solid ${item.border}` }}>
+                {item.icon}
+              </span>
+              <span className="land-drawer-item-text">
+                <span className="land-drawer-item-label" style={{ color: item.color }}>{item.label}</span>
+                <span className="land-drawer-item-sub">{item.sub}</span>
+              </span>
+              <svg className="land-drawer-item-arrow" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </a>
+          ))}
+
+          <div className="land-drawer-divider" />
+
+          {/* Login Admin */}
+          <a
+            href="/dashboard"
+            className="land-drawer-login-btn"
+            onClick={() => setDrawerOpen(false)}
+          >
+            <span>🔐</span>
+            Login Admin Dashboard
+          </a>
+        </div>
+
+        {/* Drawer footer */}
+        <div className="land-drawer-footer">
+          Desa Remau Bako Tuo &copy; {new Date().getFullYear()}
+        </div>
+      </div>
+
+      {/* ══ FULLSCREEN SLIDESHOW ══ */}
       <div className="slideshow-container">
         {SLIDES.map((slide, i) => (
           <div
@@ -69,58 +225,27 @@ export default function LandingClient() {
             style={{ backgroundImage: `url(${slide.src})` }}
           />
         ))}
-
-        {/* Dark gradient overlay */}
         <div className="slide-overlay" />
 
-        {/* Caption */}
         <div className={`slide-caption ${fade ? 'slide-caption-visible' : ''}`}>
           <div className="slide-caption-title">{SLIDES[current].caption}</div>
           <div className="slide-caption-sub">{SLIDES[current].sub}</div>
         </div>
 
-        {/* Arrows */}
-        <button className="slide-arrow slide-arrow-left" onClick={prev} aria-label="Sebelumnya">
+        <button className="slide-arrow slide-arrow-left" onClick={goPrev} aria-label="Sebelumnya">
           <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
             <path d="M15 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </button>
-        <button className="slide-arrow slide-arrow-right" onClick={next} aria-label="Berikutnya">
+        <button className="slide-arrow slide-arrow-right" onClick={goNext} aria-label="Berikutnya">
           <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
             <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </button>
 
-        {/* Dots */}
-        <div className="slide-dots">
-          {SLIDES.map((_, i) => (
-            <button
-              key={i}
-              className={`slide-dot ${i === current ? 'slide-dot-active' : ''}`}
-              onClick={() => goToIndex(i)}
-              aria-label={`Slide ${i + 1}`}
-            />
-          ))}
-        </div>
+
       </div>
 
-      {/* ── Dark header ── */}
-      <header className="map-header">
-        <div className="map-header-content">
-          <img src="https://desaremaubakotuo.netlify.app/lovable-uploads/logo-desa.png" alt="Logo Desa Remau Bako Tuo" className="map-header-logo" />
-          <div className="map-header-text">
-            <div className="map-header-title">DESA REMAU BAKO TUO</div>
-            <div className="map-header-subtitle">KABUPATEN TANJUNG JABUNG TIMUR</div>
-          </div>
-        </div>
-        <a href="/dashboard" className="map-header-btn" title="Buka Dashboard">
-          <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-          </svg>
-        </a>
-      </header>
-
-      {/* ── Watermark ── */}
       <div className="map-watermark">DESA REMAU BAKO TUO • JAMBI</div>
     </div>
   );

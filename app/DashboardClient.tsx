@@ -9,7 +9,829 @@ let dashboardScriptsPromise: Promise<void> | null = null;
 
 const DASHBOARD_MAIN_SRC = '/js/dashboard-main.js';
 
-const HTML_CONTENT = "\n  <!-- Toast Container -->\n  <div id=\"toastContainer\"></div>\n\n  <!-- Mobile Menu Overlay -->\n  <div id=\"mobileMenuOverlay\" class=\"mobile-menu-overlay\" onclick=\"toggleMobileMenu()\" style=\"display: none !important;\"></div>\n\n  <!-- Mobile Menu Drawer -->\n  <div id=\"mobileMenuDrawer\" class=\"mobile-menu-drawer\" style=\"display: none !important;\">\n    <div class=\"mobile-menu-drawer-header\">\n      <span class=\"font-semibold\">Menu</span>\n      <button onclick=\"toggleMobileMenu()\" class=\"p-1 hover:bg-white/20 rounded\">\n        <i class=\"fas fa-times text-lg\"></i>\n      </button>\n    </div>\n    <div class=\"mobile-menu-drawer-body\">\n      <div class=\"mb-4\">\n        <p class=\"text-xs text-gray-500 mb-2 px-1\">Navigasi</p>\n        <div class=\"mobile-menu-item active\" onclick=\"switchTabMobile('dampak')\">\n          <i class=\"fas fa-id-card\"></i>\n          <span>Profil</span>\n        </div>\n        <div class=\"mobile-menu-item\" onclick=\"switchTabMobile('peta-operasi')\">\n          <i class=\"fas fa-map-marked-alt\"></i>\n          <span>Peta</span>\n        </div>\n        <div class=\"mobile-menu-item\" onclick=\"switchTabMobile('pengungsi')\">\n          <i class=\"fas fa-hammer\"></i>\n          <span>Pembangunan</span>\n        </div>\n        <div class=\"mobile-menu-item\" onclick=\"switchTabMobile('bantuan')\">\n          <i class=\"fas fa-chart-line\"></i>\n          <span>Indeks</span>\n        </div>\n      </div>\n      <div class=\"border-t pt-4\">\n        <p class=\"text-xs text-gray-500 mb-2 px-1\">Update Terakhir</p>\n        <div class=\"px-1 text-sm font-medium text-gray-700\" id=\"lastUpdateMobile\">-</div>\n      </div>\n    </div>\n  </div>\n\n  <!-- Header -->\n  <header\n    class=\"bg-gradient-to-r from-primary-700 via-primary-600 to-primary-700 text-white shadow-lg sticky top-0 z-50\">\n    <div class=\"container-fluid px-2 md:px-4\">\n      <div class=\"flex items-center justify-between h-14 md:h-16\">\n        <!-- Logo & Title -->\n        <a href=\"/\" class=\"flex items-center gap-2 md:gap-3 min-w-0 flex-1 hover:opacity-90 transition-opacity\">\n          <img src=\"https://desaremaubakotuo.netlify.app/lovable-uploads/logo-desa.png\" alt=\"Logo Desa Remau Bako Tuo\" class=\"h-10 md:h-12 w-auto flex-shrink-0\">\n          <div class=\"min-w-0\">\n            <h1 class=\"text-sm md:text-lg font-bold truncate\">Desa Remau Bako Tuo</h1>\n            <p class=\"text-xs text-primary-200 block\">Kabupaten Tanjung Jabung Timur</p>\n          </div>\n        </a>\n\n        <!-- Menu Navigation (Desktop) -->\n        <nav class=\"hidden lg:flex items-center gap-2\">\n          <!-- Menu items jika ada -->\n        </nav>\n\n        <!-- Right Actions -->\n        <div class=\"flex items-center gap-2 md:gap-4 flex-shrink-0\">\n          <div class=\"text-right hidden sm:block\">\n            <p class=\"text-xs text-primary-200\">Update Terakhir</p>\n            <p id=\"lastUpdate\" class=\"text-xs md:text-sm font-medium\">-</p>\n          </div>\n          <button onclick=\"refreshData()\" class=\"bg-white/20 hover:bg-white/30 p-1.5 md:p-2 rounded-lg transition\"\n            title=\"Refresh Data\">\n            <i class=\"fas fa-sync-alt text-sm md:text-base\"></i>\n          </button>\n          <!-- Mobile Menu Button -->\n          <button id=\"mobileMenuBtn\" onclick=\"toggleMobileMenu()\"\n            class=\"md:hidden bg-white/20 hover:bg-white/30 p-1.5 rounded-lg transition\" style=\"display: none !important;\">\n            <i class=\"fas fa-bars text-lg\"></i>\n          </button>\n        </div>\n      </div>\n    </div>\n  </header>\n\n  <!-- Tab Bar -->\n  <div class=\"bg-white shadow-sm border-b sticky top-14 md:top-16 z-40\" style=\"display: none !important;\">\n    <div class=\"container-fluid px-2 md:px-4\">\n      <div\n        class=\"flex items-center justify-between md:justify-start gap-0 md:gap-1 overflow-x-auto py-1 scrollbar-hide\">\n        <button onclick=\"switchTab('dampak')\" id=\"tab-dampak\"\n          class=\"tab-btn active flex-1 md:flex-none px-3 md:px-6 py-2 md:py-3 text-xs md:text-sm font-medium text-gray-600 hover:text-primary-600 whitespace-nowrap\">\n          <i class=\"fas fa-id-card mr-1 md:mr-2\"></i><span class=\"hidden xs:inline\">Profil</span><span\n            class=\"xs:hidden\">Profil</span>\n        </button>\n        <button onclick=\"switchTab('peta-operasi')\" id=\"tab-peta-operasi\"\n          class=\"tab-btn flex-1 md:flex-none px-3 md:px-6 py-2 md:py-3 text-xs md:text-sm font-medium text-gray-600 hover:text-primary-600 whitespace-nowrap\">\n          <i class=\"fas fa-map-marked-alt mr-1 md:mr-2\"></i><span class=\"hidden sm:inline\">Peta</span><span\n            class=\"sm:hidden\">Peta</span>\n        </button>\n        <button onclick=\"switchTab('pengungsi')\" id=\"tab-pengungsi\"\n          class=\"tab-btn flex-1 md:flex-none px-3 md:px-6 py-2 md:py-3 text-xs md:text-sm font-medium text-gray-600 hover:text-primary-600 whitespace-nowrap\">\n          <i class=\"fas fa-hammer mr-1 md:mr-2\"></i><span class=\"hidden xs:inline\">Pembangunan</span><span\n            class=\"xs:hidden\">Pembangunan</span>\n        </button>\n        <button onclick=\"switchTab('bantuan')\" id=\"tab-bantuan\"\n          class=\"tab-btn flex-1 md:flex-none px-3 md:px-6 py-2 md:py-3 text-xs md:text-sm font-medium text-gray-600 hover:text-primary-600 whitespace-nowrap\">\n          <i class=\"fas fa-chart-line mr-1 md:mr-2\"></i><span class=\"hidden xs:inline\">Indeks</span><span\n            class=\"xs:hidden\">IDM</span>\n        </button>\n      </div>\n    </div>\n  </div>\n\n  <!-- Main Content -->\n  <main class=\"container-fluid px-2 md:px-4 py-4\">\n    <!-- Loading Overlay -->\n    <div id=\"loadingOverlay\" class=\"fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden\">\n      <div class=\"bg-white rounded-xl p-8 flex flex-col items-center gap-4 min-w-[280px]\">\n        <div class=\"spinner\"></div>\n        <p class=\"text-gray-700 font-medium\">Memuat Data</p>\n        <ul id=\"loadingList\" class=\"w-full space-y-2 text-sm\">\n          <!-- Loading items will be populated by JavaScript -->\n        </ul>\n      </div>\n    </div>\n\n    <!-- TAB: Profil Desa -->\n    <div id=\"content-dampak\" class=\"tab-content active\">\n      <!-- KPI Summary Cards -->\n      <div class=\"grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-4\">\n        <div class=\"kpi-card card-hover cursor-pointer\" onclick=\"focusMapOnCategory('korban', this)\"\n          title=\"Klik untuk melihat di peta\">\n          <div class=\"flex items-center justify-between\">\n            <div>\n              <p class=\"text-xs text-gray-500 mb-1\">Jumlah Penduduk</p>\n              <p id=\"kpi-korban\" class=\"text-2xl font-bold text-gray-800\">-</p>\n            </div>\n            <div class=\"bg-primary-100 p-3 rounded-full\">\n              <i class=\"fas fa-users text-primary-600\"></i>\n            </div>\n          </div>\n        </div>\n        <div class=\"kpi-card card-hover cursor-pointer\" onclick=\"focusMapOnCategory('pengungsi', this)\"\n          title=\"Klik untuk melihat di peta\">\n          <div class=\"flex items-center justify-between\">\n            <div>\n              <p class=\"text-xs text-gray-500 mb-1\">Jumlah KK</p>\n              <p id=\"kpi-pengungsi\" class=\"text-2xl font-bold text-gray-800\">-</p>\n            </div>\n            <div class=\"bg-orange-100 p-3 rounded-full\">\n              <i class=\"fas fa-home text-orange-600\"></i>\n            </div>\n          </div>\n        </div>\n        <div class=\"kpi-card card-hover cursor-pointer\" onclick=\"focusMapOnCategory('titik', this)\"\n          title=\"Klik untuk melihat di peta\">\n          <div class=\"flex items-center justify-between\">\n            <div>\n              <p class=\"text-xs text-gray-500 mb-1\">Jumlah Dusun</p>\n              <p id=\"kpi-titik\" class=\"text-2xl font-bold text-gray-800\">-</p>\n            </div>\n            <div class=\"bg-blue-100 p-3 rounded-full\">\n              <i class=\"fas fa-map-pin text-blue-600\"></i>\n            </div>\n          </div>\n        </div>\n        <div class=\"kpi-card card-hover cursor-pointer\" onclick=\"focusMapOnCategory('rumah', this)\"\n          title=\"Klik untuk melihat di peta\">\n          <div class=\"flex items-center justify-between\">\n            <div>\n              <p class=\"text-xs text-gray-500 mb-1\">Jumlah RT/RW</p>\n              <p id=\"kpi-rumah\" class=\"text-2xl font-bold text-gray-800\">-</p>\n            </div>\n            <div class=\"bg-red-100 p-3 rounded-full\">\n              <i class=\"fas fa-sitemap text-red-600\"></i>\n            </div>\n          </div>\n        </div>\n        <div class=\"kpi-card card-hover cursor-pointer\" onclick=\"focusMapOnCategory('sawah', this)\"\n          title=\"Klik untuk melihat di peta\">\n          <div class=\"flex items-center justify-between\">\n            <div>\n              <p class=\"text-xs text-gray-500 mb-1\">Luas Wilayah (Ha)</p>\n              <p id=\"kpi-sawah\" class=\"text-2xl font-bold text-gray-800\">-</p>\n            </div>\n            <div class=\"bg-green-100 p-3 rounded-full\">\n              <i class=\"fas fa-map text-green-600\"></i>\n            </div>\n          </div>\n        </div>\n        <div class=\"kpi-card card-hover cursor-pointer\" onclick=\"focusMapOnCategory('kabupaten', this)\"\n          title=\"Klik untuk melihat di peta\">\n          <div class=\"flex items-center justify-between\">\n            <div>\n              <p class=\"text-xs text-gray-500 mb-1\">Tahun Berdiri</p>\n              <p id=\"kpi-kabupaten\" class=\"text-2xl font-bold text-gray-800\">-</p>\n            </div>\n            <div class=\"bg-purple-100 p-3 rounded-full\">\n              <i class=\"fas fa-landmark text-purple-600\"></i>\n            </div>\n          </div>\n        </div>\n      </div>\n\n      <!-- Main Grid: Charts + Map + Info -->\n      <div class=\"grid grid-cols-1 lg:grid-cols-4 gap-4 main-grid\">\n        <!-- Left Panel: Charts -->\n        <div class=\"lg:col-span-1 space-y-4\">\n          <!-- Status Pie Chart -->\n          <div class=\"panel p-4\">\n            <h3 class=\"text-sm font-semibold text-gray-700 mb-3\">\n              <i class=\"fas fa-chart-pie text-primary-500 mr-2\"></i>Komposisi Penduduk\n            </h3>\n            <div class=\"chart-container\">\n              <canvas id=\"chartStatusDampak\"></canvas>\n            </div>\n          </div>\n\n          <!-- Top Dusun Bar -->\n          <div class=\"panel p-4\">\n            <h3 class=\"text-sm font-semibold text-gray-700 mb-3\">\n              <i class=\"fas fa-chart-bar text-primary-500 mr-2\"></i>Penduduk per Dusun\n            </h3>\n            <div class=\"chart-container\" style=\"height: 200px;\">\n              <canvas id=\"chartTopWilayah\"></canvas>\n            </div>\n          </div>\n        </div>\n\n        <!-- Center Map -->\n        <div class=\"lg:col-span-2 panel p-0 overflow-hidden map-container-responsive\" style=\"height: 520px;\">\n          <div id=\"map\" class=\"h-full w-full\"></div>\n        </div>\n\n        <!-- Right Panel: Stats & Legend -->\n        <div class=\"lg:col-span-1 space-y-4\">\n          <!-- Info Dasar Desa -->\n          <div class=\"panel p-4\">\n            <h3 class=\"text-sm font-semibold text-gray-700 mb-3\">\n              <i class=\"fas fa-info-circle text-primary-500 mr-2\"></i>Info Dasar Desa\n            </h3>\n            <div class=\"space-y-2\" id=\"quickStats\">\n              <div class=\"flex justify-between items-center py-2 border-b border-gray-100\">\n                <span class=\"text-xs text-gray-500\">Tahun Berdiri</span>\n                <span id=\"stat-fasum\" class=\"font-semibold text-gray-800\">-</span>\n              </div>\n              <div class=\"flex justify-between items-center py-2 border-b border-gray-100\">\n                <span class=\"text-xs text-gray-500\">Laki-laki</span>\n                <span id=\"stat-kebun\" class=\"font-semibold text-gray-800\">-</span>\n              </div>\n              <div class=\"flex justify-between items-center py-2\">\n                <span class=\"text-xs text-gray-500\">Perempuan</span>\n                <span id=\"stat-tambak\" class=\"font-semibold text-gray-800\">-</span>\n              </div>\n            </div>\n          </div>\n\n          <!-- Realisasi Program / Rekap APBDes -->\n          <div class=\"panel p-4\">\n            <h3 class=\"text-sm font-semibold text-gray-700 mb-3\">\n              <i class=\"fas fa-layer-group text-primary-500 mr-2\"></i>Rekap APBDes\n            </h3>\n            <div class=\"space-y-2\">\n              <div class=\"flex justify-between items-center py-2 border-b border-gray-100\">\n                <span class=\"text-xs text-gray-500\">Dana Desa</span>\n                <span id=\"cluster-total-kerusakan\" class=\"font-semibold text-green-600\">-</span>\n              </div>\n              <div class=\"flex justify-between items-center py-2 border-b border-gray-100\">\n                <span class=\"text-xs text-gray-500\">ADD</span>\n                <span id=\"cluster-total-kerugian\" class=\"font-semibold text-blue-600\">-</span>\n              </div>\n              <div class=\"flex justify-between items-center py-2\">\n                <span class=\"text-xs text-gray-500\">Total APBDes</span>\n                <span id=\"cluster-total-kerusakan-kerugian\" class=\"font-semibold text-gray-800\">-</span>\n              </div>\n            </div>\n            <!-- Per Bidang with Pagination -->\n            <div class=\"mt-3 pt-3 border-t border-gray-100\">\n              <div class=\"flex justify-between items-center mb-2\">\n                <p class=\"text-xs font-medium text-gray-600\">Per Bidang:</p>\n                <div class=\"flex items-center gap-1\">\n                  <button id=\"sektor-prev\" onclick=\"changeSektorPage(-1)\"\n                    class=\"p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30\" disabled>\n                    <i class=\"fas fa-chevron-left text-xs\"></i>\n                  </button>\n                  <span id=\"sektor-page-info\" class=\"text-xs text-gray-500\">1/1</span>\n                  <button id=\"sektor-next\" onclick=\"changeSektorPage(1)\"\n                    class=\"p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30\" disabled>\n                    <i class=\"fas fa-chevron-right text-xs\"></i>\n                  </button>\n                </div>\n              </div>\n              <div id=\"cluster-sektor-breakdown\" class=\"space-y-1\">\n                <div class=\"text-gray-400 text-center py-1 text-xs\">Memuat...</div>\n              </div>\n            </div>\n          </div>\n        </div>\n      </div>\n\n      <!-- Program Pembangunan Section -->\n      <div class=\"panel p-4 mt-4\">\n        <div class=\"flex items-center justify-between mb-3\">\n          <h3 class=\"text-sm font-semibold text-gray-700\">\n            <i class=\"fas fa-hard-hat text-green-500 mr-2\"></i>Program Pembangunan Desa\n            <span id=\"pertanian-total\"\n              class=\"ml-2 px-2 py-0.5 bg-green-100 text-green-700 rounded text-xs font-bold\">0</span>\n          </h3>\n          <div class=\"flex gap-2 text-xs\">\n            <div class=\"px-2 py-1 bg-red-50 rounded\">\n              <span class=\"text-red-600\">Prioritas:</span>\n              <span id=\"pertanian-berat\" class=\"font-bold text-red-700\">0</span>\n            </div>\n            <div class=\"px-2 py-1 bg-yellow-50 rounded\">\n              <span class=\"text-yellow-600\">Sedang:</span>\n              <span id=\"pertanian-sedang\" class=\"font-bold text-yellow-700\">0</span>\n            </div>\n            <div class=\"px-2 py-1 bg-green-50 rounded\">\n              <span class=\"text-green-600\">Selesai:</span>\n              <span id=\"pertanian-ringan\" class=\"font-bold text-green-700\">0</span>\n            </div>\n          </div>\n        </div>\n        <div class=\"overflow-x-auto max-h-64\">\n          <table class=\"data-table text-xs w-full\">\n            <thead>\n              <tr class=\"bg-gray-50\">\n                <th class=\"text-left p-2\">Nama Program</th>\n                <th class=\"text-left p-2\">Kabupaten</th>\n                <th class=\"text-left p-2\">Kecamatan</th>\n                <th class=\"text-right p-2\">Volume</th>\n                <th class=\"text-right p-2\">Anggaran</th>\n                <th class=\"text-center p-2\">Status</th>\n              </tr>\n            </thead>\n            <tbody id=\"tablePertanian\">\n              <tr>\n                <td colspan=\"6\" class=\"text-center p-4 text-gray-400\">Memuat data...</td>\n              </tr>\n            </tbody>\n          </table>\n        </div>\n      </div>\n    </div>\n\n    <!-- TAB: Peta Desa -->\n    <div id=\"content-peta-operasi\" class=\"tab-content\">\n      <!-- Fullscreen Map Container -->\n      <div class=\"map-fullscreen-container panel\">\n        <!-- Map -->\n        <div id=\"mapOperasi\"></div>\n\n        <!-- Right Overlay Cards -->\n        <div class=\"map-overlay-right\">\n          <!-- Fasilitas Desa -->\n          <div class=\"map-overlay-card\">\n            <h3><i class=\"fas fa-hospital text-green-500 mr-1\"></i>Fasilitas Kesehatan</h3>\n            <div class=\"grid grid-cols-3 gap-1 text-xs\">\n              <div class=\"text-center p-1 bg-green-50 rounded\">\n                <div class=\"text-gray-500\">Polindes</div>\n                <div id=\"stat-puskesmas\" class=\"font-bold text-green-600\">-</div>\n              </div>\n              <div class=\"text-center p-1 bg-blue-50 rounded\">\n                <div class=\"text-gray-500\">Posyandu</div>\n                <div id=\"stat-rsud\" class=\"font-bold text-blue-600\">-</div>\n              </div>\n              <div class=\"text-center p-1 bg-purple-50 rounded\">\n                <div class=\"text-gray-500\">Puskesmas</div>\n                <div id=\"stat-fasyankes\" class=\"font-bold text-purple-600\">-</div>\n              </div>\n            </div>\n          </div>\n\n          <!-- Infrastruktur Status -->\n          <div class=\"map-overlay-card\">\n            <h3><i class=\"fas fa-tools text-red-500 mr-1\"></i>Status Infrastruktur</h3>\n            <div class=\"flex gap-1 text-xs\">\n              <div class=\"flex-1 text-center p-1 bg-red-50 rounded\">\n                <div class=\"text-red-600 text-[10px]\">Kritis</div>\n                <div id=\"jaringan-critical\" class=\"font-bold text-red-700\">-</div>\n              </div>\n              <div class=\"flex-1 text-center p-1 bg-yellow-50 rounded\">\n                <div class=\"text-yellow-600 text-[10px]\">Perhatian</div>\n                <div id=\"jaringan-warning\" class=\"font-bold text-yellow-700\">-</div>\n              </div>\n              <div class=\"flex-1 text-center p-1 bg-green-50 rounded\">\n                <div class=\"text-green-600 text-[10px]\">Baik</div>\n                <div id=\"jaringan-normal\" class=\"font-bold text-green-700\">-</div>\n              </div>\n            </div>\n          </div>\n\n          <!-- Titik Penting -->\n          <div class=\"map-overlay-card\">\n            <h3><i class=\"fas fa-map-marker-alt text-indigo-500 mr-1\"></i>Titik Penting Desa</h3>\n            <div class=\"space-y-1 text-xs\">\n              <div class=\"flex justify-between items-center\">\n                <span class=\"text-gray-500\">Total Titik</span>\n                <span id=\"posko-total\" class=\"font-bold text-indigo-600\">-</span>\n              </div>\n              <div class=\"flex justify-between items-center\">\n                <span class=\"text-gray-500\">Fasilitas Publik</span>\n                <span id=\"posko-pengungsi-total\" class=\"font-bold text-indigo-600\">-</span>\n              </div>\n              <div class=\"flex justify-between items-center\">\n                <span class=\"text-gray-500\">Pos Layanan</span>\n                <span id=\"posko-titik-pengungsian\" class=\"font-bold text-indigo-600\">-</span>\n              </div>\n            </div>\n          </div>\n\n          <!-- Legend Compact -->\n          <div class=\"map-overlay-card\">\n            <h3><i class=\"fas fa-info-circle text-primary-500 mr-1\"></i>Legenda</h3>\n            <div class=\"grid grid-cols-2 gap-1 text-xs\">\n              <div class=\"flex items-center gap-1\">\n                <span class=\"w-2 h-2 rounded-full bg-red-500\"></span>\n                <span>Kritis</span>\n              </div>\n              <div class=\"flex items-center gap-1\">\n                <span class=\"w-2 h-2 rounded-full bg-yellow-500\"></span>\n                <span>Perhatian</span>\n              </div>\n              <div class=\"flex items-center gap-1\">\n                <span class=\"w-2 h-2 rounded-full bg-orange-500\"></span>\n                <span>Sedang</span>\n              </div>\n              <div class=\"flex items-center gap-1\">\n                <span class=\"w-2 h-2 rounded-full bg-green-500\"></span>\n                <span>Baik</span>\n              </div>\n            </div>\n            <div class=\"mt-1 pt-1 border-t text-[10px] text-gray-500\">\n              <div>Status kondisi infrastruktur desa</div>\n            </div>\n          </div>\n        </div>\n\n        <!-- Bottom Right: Layer Controls -->\n        <div class=\"map-overlay-bottom-right\">\n          <div class=\"layer-control-toggle\" onclick=\"toggleLayerControl()\">\n            <span><i class=\"fas fa-layer-group mr-1\"></i>Layer & Filter</span>\n            <i id=\"layer-control-icon\" class=\"fas fa-chevron-up\"></i>\n          </div>\n          <div id=\"layer-control-content\" class=\"layer-control-content expanded\">\n            <div class=\"layer-control-panel\">\n              <!-- Layer Toggles -->\n              <div class=\"layer-title\">LAYER:</div>\n              <div class=\"layer-items mb-2\">\n                <label\n                  class=\"inline-flex items-center gap-1 px-1.5 py-1 bg-green-50 border border-green-200 rounded cursor-pointer hover:bg-green-100\">\n                  <input type=\"checkbox\" id=\"layer-faskes\" checked onchange=\"toggleFaskesLayer()\"\n                    class=\"w-3 h-3 accent-green-600\">\n                  <i class=\"fas fa-hospital text-green-600 text-xs\"></i>\n                  <span id=\"stat-faskes-total\" class=\"text-xs font-bold text-green-700\">-</span>\n                </label>\n                <label\n                  class=\"inline-flex items-center gap-1 px-1.5 py-1 bg-yellow-50 border border-yellow-200 rounded cursor-pointer hover:bg-yellow-100\">\n                  <input type=\"checkbox\" id=\"layer-banlog\" onchange=\"toggleLayer('banlog')\"\n                    class=\"w-3 h-3 accent-yellow-600\">\n                  <i class=\"fas fa-star text-yellow-600 text-xs\"></i>\n                  <span id=\"stat-banlog\" class=\"text-xs font-bold text-yellow-700\">-</span>\n                </label>\n                <label\n                  class=\"inline-flex items-center gap-1 px-1.5 py-1 bg-red-50 border border-red-200 rounded cursor-pointer hover:bg-red-100\">\n                  <input type=\"checkbox\" id=\"layer-jaringan\" onchange=\"toggleLayer('jaringan')\"\n                    class=\"w-3 h-3 accent-red-600\">\n                  <i class=\"fas fa-tools text-red-600 text-xs\"></i>\n                  <span id=\"stat-jaringan\" class=\"text-xs font-bold text-red-700\">-</span>\n                </label>\n                <label\n                  class=\"inline-flex items-center gap-1 px-1.5 py-1 bg-pink-50 border border-pink-200 rounded cursor-pointer hover:bg-pink-100\">\n                  <input type=\"checkbox\" id=\"layer-cluster6\" onchange=\"toggleLayer('cluster6')\"\n                    class=\"w-3 h-3 accent-pink-600\">\n                  <i class=\"fas fa-chart-line text-pink-600 text-xs\"></i>\n                  <span id=\"stat-cluster6\" class=\"text-xs font-bold text-pink-700\">-</span>\n                </label>\n                <label\n                  class=\"inline-flex items-center gap-1 px-1.5 py-1 bg-indigo-50 border border-indigo-200 rounded cursor-pointer hover:bg-indigo-100\">\n                  <input type=\"checkbox\" id=\"layer-posko\" onchange=\"toggleLayer('posko')\"\n                    class=\"w-3 h-3 accent-indigo-600\">\n                  <i class=\"fas fa-map-marker-alt text-indigo-600 text-xs\"></i>\n                  <span id=\"stat-posko\" class=\"text-xs font-bold text-indigo-700\">-</span>\n                </label>\n                <label\n                  class=\"inline-flex items-center gap-1 px-1.5 py-1 bg-amber-50 border border-amber-200 rounded cursor-pointer hover:bg-amber-100\">\n                  <input type=\"checkbox\" id=\"layer-tenda\" onchange=\"toggleLayer('tenda')\"\n                    class=\"w-3 h-3 accent-amber-600\">\n                  <i class=\"fas fa-tents text-amber-600 text-xs\"></i>\n                  <span id=\"stat-tenda\" class=\"text-xs font-bold text-amber-700\">-</span>\n                </label>\n                <label\n                  class=\"inline-flex items-center gap-1 px-1.5 py-1 bg-cyan-50 border border-cyan-200 rounded cursor-pointer hover:bg-cyan-100\">\n                  <input type=\"checkbox\" id=\"layer-faspublik\" onchange=\"toggleLayer('faspublik')\"\n                    class=\"w-3 h-3 accent-cyan-600\">\n                  <i class=\"fas fa-building-flag text-cyan-600 text-xs\"></i>\n                  <span id=\"stat-faspublik\" class=\"text-xs font-bold text-cyan-700\">-</span>\n                </label>\n                <label\n                  class=\"inline-flex items-center gap-1 px-1.5 py-1 bg-violet-50 border border-violet-200 rounded cursor-pointer hover:bg-violet-100\">\n                  <input type=\"checkbox\" id=\"layer-polygon\" onchange=\"togglePolygonLayer()\"\n                    class=\"w-3 h-3 accent-violet-600\" checked>\n                  <i class=\"fas fa-draw-polygon text-violet-600 text-xs\"></i>\n                  <span id=\"stat-polygon\" class=\"text-xs font-bold text-violet-700\">-</span>\n                </label>\n              </div>\n\n              <!-- Filters -->\n              <div class=\"layer-title\">FILTER:</div>\n              <div class=\"flex flex-wrap gap-1 mb-2\">\n                <select id=\"filterKabupaten\" onchange=\"applyFilter()\" class=\"text-xs border rounded px-1.5 py-1 flex-1\">\n                  <option value=\"\">Semua Dusun</option>\n                </select>\n                <select id=\"filterStatus\" onchange=\"applyFilter()\" class=\"text-xs border rounded px-1.5 py-1\">\n                  <option value=\"\">Semua Status</option>\n                  <option value=\"critical\">Kritis</option>\n                  <option value=\"warning\">Perlu Perhatian</option>\n                  <option value=\"normal\">Baik</option>\n                </select>\n                <button onclick=\"resetFilters()\" class=\"text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded\">\n                  <i class=\"fas fa-redo text-gray-500\"></i>\n                </button>\n              </div>\n\n              <!-- IDM Filters -->\n              <div id=\"cluster6-filters\" class=\"mb-2\" style=\"display: none;\">\n                <div class=\"layer-title text-pink-600\">IDM FILTER:</div>\n                <div class=\"flex flex-wrap gap-1\">\n                  <select id=\"filterSektor\" onchange=\"applyCluster6Filter()\"\n                    class=\"text-xs border border-pink-200 rounded px-1.5 py-1 flex-1\">\n                    <option value=\"\">Semua Dimensi</option>\n                  </select>\n                  <select id=\"filterSubSektor\" onchange=\"applyCluster6Filter()\"\n                    class=\"text-xs border border-pink-200 rounded px-1.5 py-1 flex-1\">\n                    <option value=\"\">Semua Indikator</option>\n                  </select>\n                </div>\n              </div>\n\n              <!-- Polygon Controls -->\n              <div id=\"polygon-controls\" style=\"display: flex; flex-wrap: wrap;\">\n                <div class=\"layer-title text-violet-600\">WILAYAH:</div>\n                <div class=\"flex flex-wrap gap-1\">\n                  <select id=\"polygon-level\" onchange=\"changePolygonLevel(this.value)\"\n                    class=\"text-xs border border-violet-200 rounded px-1.5 py-1\">\n                    <option value=\"2\" selected>Kabupaten/Kota</option>\n                    <option value=\"3\">Kecamatan</option>\n                    <option value=\"4\">Desa/Kelurahan</option>\n                  </select>\n                  <div class=\"relative flex-1\">\n                    <input type=\"text\" id=\"polygon-search-input\" placeholder=\"Cari wilayah...\"\n                      class=\"text-xs border border-violet-200 rounded px-2 py-1 w-full\" onkeyup=\"searchPolygon()\"\n                      autocomplete=\"off\">\n                    <div id=\"polygon-search-results\"\n                      class=\"absolute top-full left-0 w-full bg-white border border-violet-200 rounded-b shadow-lg z-50 max-h-48 overflow-y-auto\"\n                      style=\"display: none;\"></div>\n                  </div>\n                </div>\n              </div>\n            </div>\n          </div>\n        </div>\n      </div>\n    </div>\n\n    <!-- TAB: Pembangunan (Dana Desa) -->\n    <div id=\"content-pengungsi\" class=\"tab-content\">\n      <!-- KPI Cards -->\n      <div class=\"grid grid-cols-2 md:grid-cols-4 gap-4 mb-4\">\n        <div class=\"kpi-card card-hover\">\n          <div class=\"flex items-center justify-between\">\n            <div>\n              <p class=\"text-xs text-gray-500 mb-1\">Total APBDes</p>\n              <p id=\"kpi-penduduk\" class=\"text-2xl font-bold text-gray-800\">-</p>\n            </div>\n            <div class=\"bg-blue-100 p-3 rounded-full\">\n              <i class=\"fas fa-piggy-bank text-blue-600\"></i>\n            </div>\n          </div>\n        </div>\n        <div class=\"kpi-card card-hover\">\n          <div class=\"flex items-center justify-between\">\n            <div>\n              <p class=\"text-xs text-gray-500 mb-1\">Dana Desa (DD)</p>\n              <p id=\"kpi-kk\" class=\"text-2xl font-bold text-gray-800\">-</p>\n            </div>\n            <div class=\"bg-green-100 p-3 rounded-full\">\n              <i class=\"fas fa-money-bill-wave text-green-600\"></i>\n            </div>\n          </div>\n        </div>\n        <div class=\"kpi-card card-hover\">\n          <div class=\"flex items-center justify-between\">\n            <div>\n              <p class=\"text-xs text-gray-500 mb-1\">Alokasi Dana Desa</p>\n              <p id=\"kpi-disabilitas\" class=\"text-2xl font-bold text-gray-800\">-</p>\n            </div>\n            <div class=\"bg-purple-100 p-3 rounded-full\">\n              <i class=\"fas fa-donate text-purple-600\"></i>\n            </div>\n          </div>\n        </div>\n        <div class=\"kpi-card card-hover\">\n          <div class=\"flex items-center justify-between\">\n            <div>\n              <p class=\"text-xs text-gray-500 mb-1\">PAD Desa</p>\n              <p id=\"kpi-pengungsi-tab\" class=\"text-2xl font-bold text-gray-800\">-</p>\n            </div>\n            <div class=\"bg-orange-100 p-3 rounded-full\">\n              <i class=\"fas fa-hand-holding-usd text-orange-600\"></i>\n            </div>\n          </div>\n        </div>\n      </div>\n\n      <!-- Charts Row -->\n      <div class=\"grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4\">\n        <div class=\"panel p-4\">\n          <h3 class=\"text-sm font-semibold text-gray-700 mb-3\">\n            <i class=\"fas fa-star text-yellow-500 mr-2\"></i>Program Unggulan\n            <span id=\"orangHilang-total\"\n              class=\"ml-2 px-2 py-0.5 bg-yellow-100 text-yellow-700 rounded text-xs font-bold\">0</span>\n          </h3>\n          <!-- Summary Stats -->\n          <div class=\"flex gap-2 mb-3\">\n            <div class=\"flex-1 text-center p-2 bg-yellow-50 rounded\">\n              <div class=\"text-xs text-yellow-600\">Berjalan</div>\n              <div id=\"orangHilang-ongoing\" class=\"font-bold text-yellow-700\">0</div>\n            </div>\n            <div class=\"flex-1 text-center p-2 bg-green-50 rounded\">\n              <div class=\"text-xs text-green-600\">Selesai</div>\n              <div id=\"orangHilang-found\" class=\"font-bold text-green-700\">0</div>\n            </div>\n          </div>\n          <!-- Slider Container -->\n          <div class=\"relative\" style=\"height: 180px;\">\n            <div id=\"orangHilang-slider\" class=\"overflow-hidden h-full\">\n              <div id=\"orangHilang-cards\" class=\"flex transition-transform duration-300 h-full\">\n                <div class=\"flex-shrink-0 w-full h-full flex items-center justify-center text-gray-400 text-sm\">\n                  <i class=\"fas fa-spinner fa-spin mr-2\"></i>Memuat data...\n                </div>\n              </div>\n            </div>\n            <button id=\"orangHilang-prev\" onclick=\"slideOrangHilang(-1)\"\n              class=\"absolute left-0 top-1/2 -translate-y-1/2 -ml-2 bg-white shadow-lg rounded-full p-2 hover:bg-gray-100 z-10 disabled:opacity-30\"\n              disabled>\n              <i class=\"fas fa-chevron-left text-gray-600\"></i>\n            </button>\n            <button id=\"orangHilang-next\" onclick=\"slideOrangHilang(1)\"\n              class=\"absolute right-0 top-1/2 -translate-y-1/2 -mr-2 bg-white shadow-lg rounded-full p-2 hover:bg-gray-100 z-10 disabled:opacity-30\"\n              disabled>\n              <i class=\"fas fa-chevron-right text-gray-600\"></i>\n            </button>\n            <div id=\"orangHilang-dots\" class=\"absolute bottom-1 left-1/2 -translate-x-1/2 flex gap-1\"></div>\n          </div>\n        </div>\n        <div class=\"panel p-4\">\n          <h3 class=\"text-sm font-semibold text-gray-700 mb-3\">\n            <i class=\"fas fa-chart-pie text-primary-500 mr-2\"></i>Anggaran per Bidang\n          </h3>\n          <div class=\"chart-container\" style=\"height: 250px;\">\n            <canvas id=\"chartDisabilitas\"></canvas>\n          </div>\n        </div>\n        <div class=\"panel p-4\">\n          <h3 class=\"text-sm font-semibold text-gray-700 mb-3\">\n            <i class=\"fas fa-chart-bar text-primary-500 mr-2\"></i>Realisasi Anggaran\n          </h3>\n          <div class=\"chart-container\" style=\"height: 250px;\">\n            <canvas id=\"chartKK\"></canvas>\n          </div>\n        </div>\n      </div>\n\n      <!-- Map + Table -->\n      <div class=\"grid grid-cols-1 lg:grid-cols-2 gap-4\">\n        <div class=\"panel map-container-responsive\" style=\"height: 400px;\">\n          <div id=\"mapPengungsi\" class=\"h-full\"></div>\n        </div>\n        <div class=\"panel p-4\">\n          <h3 class=\"text-sm font-semibold text-gray-700 mb-3\">\n            <i class=\"fas fa-table text-primary-500 mr-2\"></i>Rincian APBDes\n          </h3>\n          <div class=\"overflow-x-auto max-h-80\">\n            <table class=\"data-table text-sm\">\n              <thead>\n                <tr class=\"bg-gray-50\">\n                  <th class=\"text-left p-3\">Bidang Program</th>\n                  <th class=\"text-right p-3\">Pagu</th>\n                  <th class=\"text-right p-3\">Realisasi</th>\n                  <th class=\"text-right p-3\">Sisa</th>\n                </tr>\n              </thead>\n              <tbody id=\"tablePengungsi\">\n                <!-- Data rows -->\n              </tbody>\n            </table>\n          </div>\n        </div>\n      </div>\n    </div>\n\n    <!-- TAB: Indeks (IDM) -->\n    <div id=\"content-bantuan\" class=\"tab-content\">\n      <!-- KPI Cards -->\n      <div class=\"grid grid-cols-2 md:grid-cols-5 gap-4 mb-4\">\n        <div class=\"kpi-card card-hover\">\n          <div class=\"flex items-center gap-3\">\n            <div class=\"bg-primary-100 p-3 rounded-full\">\n              <i class=\"fas fa-chart-line text-primary-600\"></i>\n            </div>\n            <div>\n              <p class=\"text-xs text-gray-500\">Skor IDM 2024</p>\n              <p id=\"kpi-desa\" class=\"text-xl font-bold\">-</p>\n            </div>\n          </div>\n        </div>\n        <div class=\"kpi-card card-hover\">\n          <div class=\"flex items-center gap-3\">\n            <div class=\"bg-yellow-100 p-3 rounded-full\">\n              <i class=\"fas fa-star text-yellow-600\"></i>\n            </div>\n            <div>\n              <p class=\"text-xs text-gray-500\">Status Maju</p>\n              <p id=\"kpi-kuning\" class=\"text-xl font-bold text-yellow-600\">-</p>\n            </div>\n          </div>\n        </div>\n        <div class=\"kpi-card card-hover\">\n          <div class=\"flex items-center gap-3\">\n            <div class=\"bg-blue-100 p-3 rounded-full\">\n              <i class=\"fas fa-seedling text-blue-600\"></i>\n            </div>\n            <div>\n              <p class=\"text-xs text-gray-500\">Berkembang</p>\n              <p id=\"kpi-biru\" class=\"text-xl font-bold text-blue-600\">-</p>\n            </div>\n          </div>\n        </div>\n        <div class=\"kpi-card card-hover\">\n          <div class=\"flex items-center gap-3\">\n            <div class=\"bg-gray-200 p-3 rounded-full\">\n              <i class=\"fas fa-pause-circle text-gray-600\"></i>\n            </div>\n            <div>\n              <p class=\"text-xs text-gray-500\">Tertinggal</p>\n              <p id=\"kpi-abu\" class=\"text-xl font-bold text-gray-600\">-</p>\n            </div>\n          </div>\n        </div>\n        <div class=\"kpi-card card-hover\">\n          <div class=\"flex items-center gap-3\">\n            <div class=\"bg-white border-2 p-3 rounded-full\">\n              <i class=\"fas fa-hourglass-start text-gray-400\"></i>\n            </div>\n            <div>\n              <p class=\"text-xs text-gray-500\">Sangat Tertinggal</p>\n              <p id=\"kpi-putih\" class=\"text-xl font-bold\">-</p>\n            </div>\n          </div>\n        </div>\n      </div>\n\n      <!-- Charts Row -->\n      <div class=\"grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4\">\n        <div class=\"panel p-4\">\n          <h3 class=\"text-sm font-semibold text-gray-700 mb-3\">\n            <i class=\"fas fa-chart-pie text-primary-500 mr-2\"></i>Status Indikator IDM\n          </h3>\n          <div class=\"chart-container\" style=\"height: 250px;\">\n            <canvas id=\"chartBantuanStatus\"></canvas>\n          </div>\n        </div>\n        <div class=\"panel p-4\">\n          <h3 class=\"text-sm font-semibold text-gray-700 mb-3\">\n            <i class=\"fas fa-chart-bar text-primary-500 mr-2\"></i>Skor IKS, IKE, IKL\n          </h3>\n          <div class=\"chart-container\" style=\"height: 250px;\">\n            <canvas id=\"chartBantuanKab\"></canvas>\n          </div>\n        </div>\n      </div>\n\n      <!-- Map + Table -->\n      <div class=\"grid grid-cols-1 lg:grid-cols-2 gap-4\">\n        <div class=\"panel map-container-responsive\" style=\"height: 400px;\">\n          <div id=\"mapBantuan\" class=\"h-full\"></div>\n        </div>\n        <div class=\"panel p-4\">\n          <h3 class=\"text-sm font-semibold text-gray-700 mb-3\">\n            <i class=\"fas fa-table text-primary-500 mr-2\"></i>Rincian Indikator\n          </h3>\n          <div class=\"overflow-x-auto max-h-80\">\n            <table class=\"data-table text-sm w-full\">\n              <thead>\n                <tr class=\"bg-gray-50\">\n                  <th class=\"text-left p-3\">Indikator</th>\n                  <th class=\"text-center p-3\">Kode</th>\n                  <th class=\"text-right p-3\">Skor</th>\n                  <th class=\"text-center p-3\">Status</th>\n                </tr>\n              </thead>\n              <tbody id=\"tableBantuan\">\n                <!-- Data rows -->\n              </tbody>\n            </table>\n          </div>\n        </div>\n      </div>\n    </div>\n";
+const HTML_CONTENT = `
+  <!-- Toast Container -->
+  <div id="toastContainer"></div>
+
+  <!-- Mobile Menu Overlay (legacy, hidden) -->
+  <div id="mobileMenuOverlay" class="mobile-menu-overlay" onclick="toggleMobileMenu()" style="display: none !important;"></div>
+
+  <!-- Mobile Menu Drawer (legacy, hidden) -->
+  <div id="mobileMenuDrawer" class="mobile-menu-drawer" style="display: none !important;">
+    <div class="mobile-menu-drawer-header">
+      <span class="font-semibold">Menu</span>
+      <button onclick="toggleMobileMenu()" class="p-1 hover:bg-white/20 rounded">
+        <i class="fas fa-times text-lg"></i>
+      </button>
+    </div>
+    <div class="mobile-menu-drawer-body">
+      <div class="mb-4">
+        <p class="text-xs text-gray-500 mb-2 px-1">Navigasi</p>
+        <div class="mobile-menu-item active" onclick="switchTabMobile('dampak')">
+          <i class="fas fa-id-card"></i>
+          <span>Profil</span>
+        </div>
+        <div class="mobile-menu-item" onclick="switchTabMobile('peta-operasi')">
+          <i class="fas fa-map-marked-alt"></i>
+          <span>Peta</span>
+        </div>
+        <div class="mobile-menu-item" onclick="switchTabMobile('pengungsi')">
+          <i class="fas fa-hammer"></i>
+          <span>Pembangunan</span>
+        </div>
+        <div class="mobile-menu-item" onclick="switchTabMobile('bantuan')">
+          <i class="fas fa-chart-line"></i>
+          <span>Indeks</span>
+        </div>
+      </div>
+      <div class="border-t pt-4">
+        <p class="text-xs text-gray-500 mb-2 px-1">Update Terakhir</p>
+        <div class="px-1 text-sm font-medium text-gray-700" id="lastUpdateMobile">-</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <header
+    class="bg-gradient-to-r from-primary-700 via-primary-600 to-primary-700 text-white shadow-lg sticky top-0 z-50">
+    <div class="container-fluid px-2 md:px-4">
+      <div class="flex items-center justify-between h-14 md:h-16">
+        <!-- Logo & Title -->
+        <a href="/" class="flex items-center gap-2 md:gap-3 min-w-0 flex-1 hover:opacity-90 transition-opacity">
+          <img src="https://desaremaubakotuo.netlify.app/lovable-uploads/logo-desa.png" alt="Logo Desa Remau Bako Tuo" class="h-10 md:h-12 w-auto flex-shrink-0">
+          <div class="min-w-0">
+            <h1 class="text-sm md:text-lg font-bold truncate">Desa Remau Bako Tuo</h1>
+            <p class="text-xs text-primary-200 block">Kabupaten Tanjung Jabung Timur</p>
+          </div>
+        </a>
+
+        <!-- Menu Navigation (Desktop) -->
+        <nav class="hidden lg:flex items-center gap-2">
+          <!-- Menu items jika ada -->
+        </nav>
+
+        <!-- Right Actions -->
+        <div class="flex items-center gap-2 md:gap-4 flex-shrink-0">
+          <div class="text-right hidden sm:block">
+            <p class="text-xs text-primary-200">Update Terakhir</p>
+            <p id="lastUpdate" class="text-xs md:text-sm font-medium">-</p>
+          </div>
+          <button onclick="refreshData()" class="bg-white/10 hover:bg-white/25 w-8 h-8 md:w-9 md:h-9 rounded-full flex items-center justify-center transition"
+            title="Refresh Data">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="w-4.5 h-4.5">
+              <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" />
+              <path d="M21 3v5h-5" />
+            </svg>
+          </button>
+          <!-- Hamburger button — opens global React drawer -->
+          <button
+            onclick="if(window.__openGlobalDrawer) window.__openGlobalDrawer();"
+            class="bg-white/10 hover:bg-white/25 w-8 h-8 md:w-9 md:h-9 rounded-full flex items-center justify-center transition"
+            title="Menu"
+            aria-label="Buka menu">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="w-4.5 h-4.5">
+              <circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none" />
+              <circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none" />
+              <circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none" />
+            </svg>
+          </button>
+          <!-- Mobile Menu Button (legacy, hidden) -->
+          <button id="mobileMenuBtn" onclick="toggleMobileMenu()"
+            class="md:hidden bg-white/20 hover:bg-white/30 p-1.5 rounded-lg transition" style="display: none !important;">
+            <i class="fas fa-bars text-lg"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Tab Bar (hidden — replaced by global BottomNav) -->
+  <div class="bg-white shadow-sm border-b sticky top-14 md:top-16 z-40" style="display: none !important;">
+    <div class="container-fluid px-2 md:px-4">
+      <div
+        class="flex items-center justify-between md:justify-start gap-0 md:gap-1 overflow-x-auto py-1 scrollbar-hide">
+        <button onclick="switchTab('dampak')" id="tab-dampak"
+          class="tab-btn active flex-1 md:flex-none px-3 md:px-6 py-2 md:py-3 text-xs md:text-sm font-medium text-gray-600 hover:text-primary-600 whitespace-nowrap">
+          <i class="fas fa-id-card mr-1 md:mr-2"></i><span class="hidden xs:inline">Profil</span><span
+            class="xs:hidden">Profil</span>
+        </button>
+        <button onclick="switchTab('peta-operasi')" id="tab-peta-operasi"
+          class="tab-btn flex-1 md:flex-none px-3 md:px-6 py-2 md:py-3 text-xs md:text-sm font-medium text-gray-600 hover:text-primary-600 whitespace-nowrap">
+          <i class="fas fa-map-marked-alt mr-1 md:mr-2"></i><span class="hidden sm:inline">Peta</span><span
+            class="sm:hidden">Peta</span>
+        </button>
+        <button onclick="switchTab('pengungsi')" id="tab-pengungsi"
+          class="tab-btn flex-1 md:flex-none px-3 md:px-6 py-2 md:py-3 text-xs md:text-sm font-medium text-gray-600 hover:text-primary-600 whitespace-nowrap">
+          <i class="fas fa-hammer mr-1 md:mr-2"></i><span class="hidden xs:inline">Pembangunan</span><span
+            class="xs:hidden">Pembangunan</span>
+        </button>
+        <button onclick="switchTab('bantuan')" id="tab-bantuan"
+          class="tab-btn flex-1 md:flex-none px-3 md:px-6 py-2 md:py-3 text-xs md:text-sm font-medium text-gray-600 hover:text-primary-600 whitespace-nowrap">
+          <i class="fas fa-chart-line mr-1 md:mr-2"></i><span class="hidden xs:inline">Indeks</span><span
+            class="xs:hidden">IDM</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <main class="container-fluid px-2 md:px-4 py-4">
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+      <div class="bg-white rounded-xl p-8 flex flex-col items-center gap-4 min-w-[280px]">
+        <div class="spinner"></div>
+        <p class="text-gray-700 font-medium">Memuat Data</p>
+        <ul id="loadingList" class="w-full space-y-2 text-sm">
+          <!-- Loading items will be populated by JavaScript -->
+        </ul>
+      </div>
+    </div>
+
+    <!-- TAB: Profil Desa -->
+    <div id="content-dampak" class="tab-content active">
+      <!-- KPI Summary Cards -->
+      <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-4">
+        <div class="kpi-card card-hover cursor-pointer" onclick="focusMapOnCategory('korban', this)"
+          title="Klik untuk melihat di peta">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-xs text-gray-500 mb-1">Jumlah Penduduk</p>
+              <p id="kpi-korban" class="text-2xl font-bold text-gray-800">-</p>
+            </div>
+            <div class="bg-primary-100 p-3 rounded-full">
+              <i class="fas fa-users text-primary-600"></i>
+            </div>
+          </div>
+        </div>
+        <div class="kpi-card card-hover cursor-pointer" onclick="focusMapOnCategory('pengungsi', this)"
+          title="Klik untuk melihat di peta">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-xs text-gray-500 mb-1">Jumlah KK</p>
+              <p id="kpi-pengungsi" class="text-2xl font-bold text-gray-800">-</p>
+            </div>
+            <div class="bg-orange-100 p-3 rounded-full">
+              <i class="fas fa-home text-orange-600"></i>
+            </div>
+          </div>
+        </div>
+        <div class="kpi-card card-hover cursor-pointer" onclick="focusMapOnCategory('titik', this)"
+          title="Klik untuk melihat di peta">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-xs text-gray-500 mb-1">Jumlah Dusun</p>
+              <p id="kpi-titik" class="text-2xl font-bold text-gray-800">-</p>
+            </div>
+            <div class="bg-blue-100 p-3 rounded-full">
+              <i class="fas fa-map-pin text-blue-600"></i>
+            </div>
+          </div>
+        </div>
+        <div class="kpi-card card-hover cursor-pointer" onclick="focusMapOnCategory('rumah', this)"
+          title="Klik untuk melihat di peta">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-xs text-gray-500 mb-1">Jumlah RT/RW</p>
+              <p id="kpi-rumah" class="text-2xl font-bold text-gray-800">-</p>
+            </div>
+            <div class="bg-red-100 p-3 rounded-full">
+              <i class="fas fa-sitemap text-red-600"></i>
+            </div>
+          </div>
+        </div>
+        <div class="kpi-card card-hover cursor-pointer" onclick="focusMapOnCategory('sawah', this)"
+          title="Klik untuk melihat di peta">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-xs text-gray-500 mb-1">Luas Wilayah (Ha)</p>
+              <p id="kpi-sawah" class="text-2xl font-bold text-gray-800">-</p>
+            </div>
+            <div class="bg-green-100 p-3 rounded-full">
+              <i class="fas fa-map text-green-600"></i>
+            </div>
+          </div>
+        </div>
+        <div class="kpi-card card-hover cursor-pointer" onclick="focusMapOnCategory('kabupaten', this)"
+          title="Klik untuk melihat di peta">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-xs text-gray-500 mb-1">Tahun Berdiri</p>
+              <p id="kpi-kabupaten" class="text-2xl font-bold text-gray-800">-</p>
+            </div>
+            <div class="bg-purple-100 p-3 rounded-full">
+              <i class="fas fa-landmark text-purple-600"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Grid: Charts + Map + Info -->
+      <div class="grid grid-cols-1 lg:grid-cols-4 gap-4 main-grid">
+        <!-- Left Panel: Charts -->
+        <div class="lg:col-span-1 space-y-4">
+          <!-- Status Pie Chart -->
+          <div class="panel p-4">
+            <h3 class="text-sm font-semibold text-gray-700 mb-3">
+              <i class="fas fa-chart-pie text-primary-500 mr-2"></i>Komposisi Penduduk
+            </h3>
+            <div class="chart-container">
+              <canvas id="chartStatusDampak"></canvas>
+            </div>
+          </div>
+
+          <!-- Top Dusun Bar -->
+          <div class="panel p-4">
+            <h3 class="text-sm font-semibold text-gray-700 mb-3">
+              <i class="fas fa-chart-bar text-primary-500 mr-2"></i>Penduduk per Dusun
+            </h3>
+            <div class="chart-container" style="height: 200px;">
+              <canvas id="chartTopWilayah"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Center Map -->
+        <div class="lg:col-span-2 panel p-0 overflow-hidden map-container-responsive" style="height: 520px;">
+          <div id="map" class="h-full w-full"></div>
+        </div>
+
+        <!-- Right Panel: Stats & Legend -->
+        <div class="lg:col-span-1 space-y-4">
+          <!-- Info Dasar Desa -->
+          <div class="panel p-4">
+            <h3 class="text-sm font-semibold text-gray-700 mb-3">
+              <i class="fas fa-info-circle text-primary-500 mr-2"></i>Info Dasar Desa
+            </h3>
+            <div class="space-y-2" id="quickStats">
+              <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                <span class="text-xs text-gray-500">Tahun Berdiri</span>
+                <span id="stat-fasum" class="font-semibold text-gray-800">-</span>
+              </div>
+              <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                <span class="text-xs text-gray-500">Laki-laki</span>
+                <span id="stat-kebun" class="font-semibold text-gray-800">-</span>
+              </div>
+              <div class="flex justify-between items-center py-2">
+                <span class="text-xs text-gray-500">Perempuan</span>
+                <span id="stat-tambak" class="font-semibold text-gray-800">-</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Realisasi Program / Rekap APBDes -->
+          <div class="panel p-4">
+            <h3 class="text-sm font-semibold text-gray-700 mb-3">
+              <i class="fas fa-layer-group text-primary-500 mr-2"></i>Rekap APBDes
+            </h3>
+            <div class="space-y-2">
+              <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                <span class="text-xs text-gray-500">Dana Desa</span>
+                <span id="cluster-total-kerusakan" class="font-semibold text-green-600">-</span>
+              </div>
+              <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                <span class="text-xs text-gray-500">ADD</span>
+                <span id="cluster-total-kerugian" class="font-semibold text-blue-600">-</span>
+              </div>
+              <div class="flex justify-between items-center py-2">
+                <span class="text-xs text-gray-500">Total APBDes</span>
+                <span id="cluster-total-kerusakan-kerugian" class="font-semibold text-gray-800">-</span>
+              </div>
+            </div>
+            <!-- Per Bidang with Pagination -->
+            <div class="mt-3 pt-3 border-t border-gray-100">
+              <div class="flex justify-between items-center mb-2">
+                <p class="text-xs font-medium text-gray-600">Per Bidang:</p>
+                <div class="flex items-center gap-1">
+                  <button id="sektor-prev" onclick="changeSektorPage(-1)"
+                    class="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30" disabled>
+                    <i class="fas fa-chevron-left text-xs"></i>
+                  </button>
+                  <span id="sektor-page-info" class="text-xs text-gray-500">1/1</span>
+                  <button id="sektor-next" onclick="changeSektorPage(1)"
+                    class="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30" disabled>
+                    <i class="fas fa-chevron-right text-xs"></i>
+                  </button>
+                </div>
+              </div>
+              <div id="cluster-sektor-breakdown" class="space-y-1">
+                <div class="text-gray-400 text-center py-1 text-xs">Memuat...</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Program Pembangunan Section -->
+      <div class="panel p-4 mt-4">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-sm font-semibold text-gray-700">
+            <i class="fas fa-hard-hat text-green-500 mr-2"></i>Program Pembangunan Desa
+            <span id="pertanian-total"
+              class="ml-2 px-2 py-0.5 bg-green-100 text-green-700 rounded text-xs font-bold">0</span>
+          </h3>
+          <div class="flex gap-2 text-xs">
+            <div class="px-2 py-1 bg-red-50 rounded">
+              <span class="text-red-600">Prioritas:</span>
+              <span id="pertanian-berat" class="font-bold text-red-700">0</span>
+            </div>
+            <div class="px-2 py-1 bg-yellow-50 rounded">
+              <span class="text-yellow-600">Sedang:</span>
+              <span id="pertanian-sedang" class="font-bold text-yellow-700">0</span>
+            </div>
+            <div class="px-2 py-1 bg-green-50 rounded">
+              <span class="text-green-600">Selesai:</span>
+              <span id="pertanian-ringan" class="font-bold text-green-700">0</span>
+            </div>
+          </div>
+        </div>
+        <div class="overflow-x-auto max-h-64">
+          <table class="data-table text-xs w-full">
+            <thead>
+              <tr class="bg-gray-50">
+                <th class="text-left p-2">Nama Program</th>
+                <th class="text-left p-2">Kabupaten</th>
+                <th class="text-left p-2">Kecamatan</th>
+                <th class="text-right p-2">Volume</th>
+                <th class="text-right p-2">Anggaran</th>
+                <th class="text-center p-2">Status</th>
+              </tr>
+            </thead>
+            <tbody id="tablePertanian">
+              <tr>
+                <td colspan="6" class="text-center p-4 text-gray-400">Memuat data...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: Peta Desa -->
+    <div id="content-peta-operasi" class="tab-content">
+      <!-- Fullscreen Map Container -->
+      <div class="map-fullscreen-container panel">
+        <!-- Map -->
+        <div id="mapOperasi"></div>
+
+        <!-- Right Overlay Cards -->
+        <div class="map-overlay-right">
+          <!-- Fasilitas Desa -->
+          <div class="map-overlay-card">
+            <h3><i class="fas fa-hospital text-green-500 mr-1"></i>Fasilitas Kesehatan</h3>
+            <div class="grid grid-cols-3 gap-1 text-xs">
+              <div class="text-center p-1 bg-green-50 rounded">
+                <div class="text-gray-500">Polindes</div>
+                <div id="stat-puskesmas" class="font-bold text-green-600">-</div>
+              </div>
+              <div class="text-center p-1 bg-blue-50 rounded">
+                <div class="text-gray-500">Posyandu</div>
+                <div id="stat-rsud" class="font-bold text-blue-600">-</div>
+              </div>
+              <div class="text-center p-1 bg-purple-50 rounded">
+                <div class="text-gray-500">Puskesmas</div>
+                <div id="stat-fasyankes" class="font-bold text-purple-600">-</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Infrastruktur Status -->
+          <div class="map-overlay-card">
+            <h3><i class="fas fa-tools text-red-500 mr-1"></i>Status Infrastruktur</h3>
+            <div class="flex gap-1 text-xs">
+              <div class="flex-1 text-center p-1 bg-red-50 rounded">
+                <div class="text-red-600 text-[10px]">Kritis</div>
+                <div id="jaringan-critical" class="font-bold text-red-700">-</div>
+              </div>
+              <div class="flex-1 text-center p-1 bg-yellow-50 rounded">
+                <div class="text-yellow-600 text-[10px]">Perhatian</div>
+                <div id="jaringan-warning" class="font-bold text-yellow-700">-</div>
+              </div>
+              <div class="flex-1 text-center p-1 bg-green-50 rounded">
+                <div class="text-green-600 text-[10px]">Baik</div>
+                <div id="jaringan-normal" class="font-bold text-green-700">-</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Titik Penting -->
+          <div class="map-overlay-card">
+            <h3><i class="fas fa-map-marker-alt text-indigo-500 mr-1"></i>Titik Penting Desa</h3>
+            <div class="space-y-1 text-xs">
+              <div class="flex justify-between items-center">
+                <span class="text-gray-500">Total Titik</span>
+                <span id="posko-total" class="font-bold text-indigo-600">-</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-gray-500">Fasilitas Publik</span>
+                <span id="posko-pengungsi-total" class="font-bold text-indigo-600">-</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-gray-500">Pos Layanan</span>
+                <span id="posko-titik-pengungsian" class="font-bold text-indigo-600">-</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Legend Compact -->
+          <div class="map-overlay-card">
+            <h3><i class="fas fa-info-circle text-primary-500 mr-1"></i>Legenda</h3>
+            <div class="grid grid-cols-2 gap-1 text-xs">
+              <div class="flex items-center gap-1">
+                <span class="w-2 h-2 rounded-full bg-red-500"></span>
+                <span>Kritis</span>
+              </div>
+              <div class="flex items-center gap-1">
+                <span class="w-2 h-2 rounded-full bg-yellow-500"></span>
+                <span>Perhatian</span>
+              </div>
+              <div class="flex items-center gap-1">
+                <span class="w-2 h-2 rounded-full bg-orange-500"></span>
+                <span>Sedang</span>
+              </div>
+              <div class="flex items-center gap-1">
+                <span class="w-2 h-2 rounded-full bg-green-500"></span>
+                <span>Baik</span>
+              </div>
+            </div>
+            <div class="mt-1 pt-1 border-t text-[10px] text-gray-500">
+              <div>Status kondisi infrastruktur desa</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bottom Right: Layer Controls -->
+        <div class="map-overlay-bottom-right">
+          <div class="layer-control-toggle" onclick="toggleLayerControl()">
+            <span><i class="fas fa-layer-group mr-1"></i>Layer & Filter</span>
+            <i id="layer-control-icon" class="fas fa-chevron-up"></i>
+          </div>
+          <div id="layer-control-content" class="layer-control-content expanded">
+            <div class="layer-control-panel">
+              <!-- Layer Toggles -->
+              <div class="layer-title">LAYER:</div>
+              <div class="layer-items mb-2">
+                <label
+                  class="inline-flex items-center gap-1 px-1.5 py-1 bg-green-50 border border-green-200 rounded cursor-pointer hover:bg-green-100">
+                  <input type="checkbox" id="layer-faskes" checked onchange="toggleFaskesLayer()"
+                    class="w-3 h-3 accent-green-600">
+                  <i class="fas fa-hospital text-green-600 text-xs"></i>
+                  <span id="stat-faskes-total" class="text-xs font-bold text-green-700">-</span>
+                </label>
+                <label
+                  class="inline-flex items-center gap-1 px-1.5 py-1 bg-yellow-50 border border-yellow-200 rounded cursor-pointer hover:bg-yellow-100">
+                  <input type="checkbox" id="layer-banlog" onchange="toggleLayer('banlog')"
+                    class="w-3 h-3 accent-yellow-600">
+                  <i class="fas fa-star text-yellow-600 text-xs"></i>
+                  <span id="stat-banlog" class="text-xs font-bold text-yellow-700">-</span>
+                </label>
+                <label
+                  class="inline-flex items-center gap-1 px-1.5 py-1 bg-red-50 border border-red-200 rounded cursor-pointer hover:bg-red-100">
+                  <input type="checkbox" id="layer-jaringan" onchange="toggleLayer('jaringan')"
+                    class="w-3 h-3 accent-red-600">
+                  <i class="fas fa-tools text-red-600 text-xs"></i>
+                  <span id="stat-jaringan" class="text-xs font-bold text-red-700">-</span>
+                </label>
+                <label
+                  class="inline-flex items-center gap-1 px-1.5 py-1 bg-pink-50 border border-pink-200 rounded cursor-pointer hover:bg-pink-100">
+                  <input type="checkbox" id="layer-cluster6" onchange="toggleLayer('cluster6')"
+                    class="w-3 h-3 accent-pink-600">
+                  <i class="fas fa-chart-line text-pink-600 text-xs"></i>
+                  <span id="stat-cluster6" class="text-xs font-bold text-pink-700">-</span>
+                </label>
+                <label
+                  class="inline-flex items-center gap-1 px-1.5 py-1 bg-indigo-50 border border-indigo-200 rounded cursor-pointer hover:bg-indigo-100">
+                  <input type="checkbox" id="layer-posko" onchange="toggleLayer('posko')"
+                    class="w-3 h-3 accent-indigo-600">
+                  <i class="fas fa-map-marker-alt text-indigo-600 text-xs"></i>
+                  <span id="stat-posko" class="text-xs font-bold text-indigo-700">-</span>
+                </label>
+                <label
+                  class="inline-flex items-center gap-1 px-1.5 py-1 bg-amber-50 border border-amber-200 rounded cursor-pointer hover:bg-amber-100">
+                  <input type="checkbox" id="layer-tenda" onchange="toggleLayer('tenda')"
+                    class="w-3 h-3 accent-amber-600">
+                  <i class="fas fa-tents text-amber-600 text-xs"></i>
+                  <span id="stat-tenda" class="text-xs font-bold text-amber-700">-</span>
+                </label>
+                <label
+                  class="inline-flex items-center gap-1 px-1.5 py-1 bg-cyan-50 border border-cyan-200 rounded cursor-pointer hover:bg-cyan-100">
+                  <input type="checkbox" id="layer-faspublik" onchange="toggleLayer('faspublik')"
+                    class="w-3 h-3 accent-cyan-600">
+                  <i class="fas fa-building-flag text-cyan-600 text-xs"></i>
+                  <span id="stat-faspublik" class="text-xs font-bold text-cyan-700">-</span>
+                </label>
+                <label
+                  class="inline-flex items-center gap-1 px-1.5 py-1 bg-violet-50 border border-violet-200 rounded cursor-pointer hover:bg-violet-100">
+                  <input type="checkbox" id="layer-polygon" onchange="togglePolygonLayer()"
+                    class="w-3 h-3 accent-violet-600" checked>
+                  <i class="fas fa-draw-polygon text-violet-600 text-xs"></i>
+                  <span id="stat-polygon" class="text-xs font-bold text-violet-700">-</span>
+                </label>
+              </div>
+
+              <!-- Filters -->
+              <div class="layer-title">FILTER:</div>
+              <div class="flex flex-wrap gap-1 mb-2">
+                <select id="filterKabupaten" onchange="applyFilter()" class="text-xs border rounded px-1.5 py-1 flex-1">
+                  <option value="">Semua Dusun</option>
+                </select>
+                <select id="filterStatus" onchange="applyFilter()" class="text-xs border rounded px-1.5 py-1">
+                  <option value="">Semua Status</option>
+                  <option value="critical">Kritis</option>
+                  <option value="warning">Perlu Perhatian</option>
+                  <option value="normal">Baik</option>
+                </select>
+                <button onclick="resetFilters()" class="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded">
+                  <i class="fas fa-redo text-gray-500"></i>
+                </button>
+              </div>
+
+              <!-- IDM Filters -->
+              <div id="cluster6-filters" class="mb-2" style="display: none;">
+                <div class="layer-title text-pink-600">IDM FILTER:</div>
+                <div class="flex flex-wrap gap-1">
+                  <select id="filterSektor" onchange="applyCluster6Filter()"
+                    class="text-xs border border-pink-200 rounded px-1.5 py-1 flex-1">
+                    <option value="">Semua Dimensi</option>
+                  </select>
+                  <select id="filterSubSektor" onchange="applyCluster6Filter()"
+                    class="text-xs border border-pink-200 rounded px-1.5 py-1 flex-1">
+                    <option value="">Semua Indikator</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Polygon Controls -->
+              <div id="polygon-controls" style="display: flex; flex-wrap: wrap;">
+                <div class="layer-title text-violet-600">WILAYAH:</div>
+                <div class="flex flex-wrap gap-1">
+                  <select id="polygon-level" onchange="changePolygonLevel(this.value)"
+                    class="text-xs border border-violet-200 rounded px-1.5 py-1">
+                    <option value="2" selected>Kabupaten/Kota</option>
+                    <option value="3">Kecamatan</option>
+                    <option value="4">Desa/Kelurahan</option>
+                  </select>
+                  <div class="relative flex-1">
+                    <input type="text" id="polygon-search-input" placeholder="Cari wilayah..."
+                      class="text-xs border border-violet-200 rounded px-2 py-1 w-full" onkeyup="searchPolygon()"
+                      autocomplete="off">
+                    <div id="polygon-search-results"
+                      class="absolute top-full left-0 w-full bg-white border border-violet-200 rounded-b shadow-lg z-50 max-h-48 overflow-y-auto"
+                      style="display: none;"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: Pembangunan (Dana Desa) -->
+    <div id="content-pengungsi" class="tab-content">
+      <!-- KPI Cards -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+        <div class="kpi-card card-hover">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-xs text-gray-500 mb-1">Total APBDes</p>
+              <p id="kpi-penduduk" class="text-2xl font-bold text-gray-800">-</p>
+            </div>
+            <div class="bg-blue-100 p-3 rounded-full">
+              <i class="fas fa-piggy-bank text-blue-600"></i>
+            </div>
+          </div>
+        </div>
+        <div class="kpi-card card-hover">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-xs text-gray-500 mb-1">Dana Desa (DD)</p>
+              <p id="kpi-kk" class="text-2xl font-bold text-gray-800">-</p>
+            </div>
+            <div class="bg-green-100 p-3 rounded-full">
+              <i class="fas fa-money-bill-wave text-green-600"></i>
+            </div>
+          </div>
+        </div>
+        <div class="kpi-card card-hover">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-xs text-gray-500 mb-1">Alokasi Dana Desa</p>
+              <p id="kpi-disabilitas" class="text-2xl font-bold text-gray-800">-</p>
+            </div>
+            <div class="bg-purple-100 p-3 rounded-full">
+              <i class="fas fa-donate text-purple-600"></i>
+            </div>
+          </div>
+        </div>
+        <div class="kpi-card card-hover">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-xs text-gray-500 mb-1">PAD Desa</p>
+              <p id="kpi-pengungsi-tab" class="text-2xl font-bold text-gray-800">-</p>
+            </div>
+            <div class="bg-orange-100 p-3 rounded-full">
+              <i class="fas fa-hand-holding-usd text-orange-600"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts Row -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+        <div class="panel p-4">
+          <h3 class="text-sm font-semibold text-gray-700 mb-3">
+            <i class="fas fa-star text-yellow-500 mr-2"></i>Program Unggulan
+            <span id="orangHilang-total"
+              class="ml-2 px-2 py-0.5 bg-yellow-100 text-yellow-700 rounded text-xs font-bold">0</span>
+          </h3>
+          <!-- Summary Stats -->
+          <div class="flex gap-2 mb-3">
+            <div class="flex-1 text-center p-2 bg-yellow-50 rounded">
+              <div class="text-xs text-yellow-600">Berjalan</div>
+              <div id="orangHilang-ongoing" class="font-bold text-yellow-700">0</div>
+            </div>
+            <div class="flex-1 text-center p-2 bg-green-50 rounded">
+              <div class="text-xs text-green-600">Selesai</div>
+              <div id="orangHilang-found" class="font-bold text-green-700">0</div>
+            </div>
+          </div>
+          <!-- Slider Container -->
+          <div class="relative" style="height: 180px;">
+            <div id="orangHilang-slider" class="overflow-hidden h-full">
+              <div id="orangHilang-cards" class="flex transition-transform duration-300 h-full">
+                <div class="flex-shrink-0 w-full h-full flex items-center justify-center text-gray-400 text-sm">
+                  <i class="fas fa-spinner fa-spin mr-2"></i>Memuat data...
+                </div>
+              </div>
+            </div>
+            <button id="orangHilang-prev" onclick="slideOrangHilang(-1)"
+              class="absolute left-0 top-1/2 -translate-y-1/2 -ml-2 bg-white shadow-lg rounded-full p-2 hover:bg-gray-100 z-10 disabled:opacity-30"
+              disabled>
+              <i class="fas fa-chevron-left text-gray-600"></i>
+            </button>
+            <button id="orangHilang-next" onclick="slideOrangHilang(1)"
+              class="absolute right-0 top-1/2 -translate-y-1/2 -mr-2 bg-white shadow-lg rounded-full p-2 hover:bg-gray-100 z-10 disabled:opacity-30"
+              disabled>
+              <i class="fas fa-chevron-right text-gray-600"></i>
+            </button>
+            <div id="orangHilang-dots" class="absolute bottom-1 left-1/2 -translate-x-1/2 flex gap-1"></div>
+          </div>
+        </div>
+        <div class="panel p-4">
+          <h3 class="text-sm font-semibold text-gray-700 mb-3">
+            <i class="fas fa-chart-pie text-primary-500 mr-2"></i>Anggaran per Bidang
+          </h3>
+          <div class="chart-container" style="height: 250px;">
+            <canvas id="chartDisabilitas"></canvas>
+          </div>
+        </div>
+        <div class="panel p-4">
+          <h3 class="text-sm font-semibold text-gray-700 mb-3">
+            <i class="fas fa-chart-bar text-primary-500 mr-2"></i>Realisasi Anggaran
+          </h3>
+          <div class="chart-container" style="height: 250px;">
+            <canvas id="chartKK"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Map + Table -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div class="panel map-container-responsive" style="height: 400px;">
+          <div id="mapPengungsi" class="h-full"></div>
+        </div>
+        <div class="panel p-4">
+          <h3 class="text-sm font-semibold text-gray-700 mb-3">
+            <i class="fas fa-table text-primary-500 mr-2"></i>Rincian APBDes
+          </h3>
+          <div class="overflow-x-auto max-h-80">
+            <table class="data-table text-sm">
+              <thead>
+                <tr class="bg-gray-50">
+                  <th class="text-left p-3">Bidang Program</th>
+                  <th class="text-right p-3">Pagu</th>
+                  <th class="text-right p-3">Realisasi</th>
+                  <th class="text-right p-3">Sisa</th>
+                </tr>
+              </thead>
+              <tbody id="tablePengungsi">
+                <!-- Data rows -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: Indeks (IDM) -->
+    <div id="content-bantuan" class="tab-content">
+      <!-- KPI Cards -->
+      <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-4">
+        <div class="kpi-card card-hover">
+          <div class="flex items-center gap-3">
+            <div class="bg-primary-100 p-3 rounded-full">
+              <i class="fas fa-chart-line text-primary-600"></i>
+            </div>
+            <div>
+              <p class="text-xs text-gray-500">Skor IDM 2024</p>
+              <p id="kpi-desa" class="text-xl font-bold">-</p>
+            </div>
+          </div>
+        </div>
+        <div class="kpi-card card-hover">
+          <div class="flex items-center gap-3">
+            <div class="bg-yellow-100 p-3 rounded-full">
+              <i class="fas fa-star text-yellow-600"></i>
+            </div>
+            <div>
+              <p class="text-xs text-gray-500">Status Maju</p>
+              <p id="kpi-kuning" class="text-xl font-bold text-yellow-600">-</p>
+            </div>
+          </div>
+        </div>
+        <div class="kpi-card card-hover">
+          <div class="flex items-center gap-3">
+            <div class="bg-blue-100 p-3 rounded-full">
+              <i class="fas fa-seedling text-blue-600"></i>
+            </div>
+            <div>
+              <p class="text-xs text-gray-500">Berkembang</p>
+              <p id="kpi-biru" class="text-xl font-bold text-blue-600">-</p>
+            </div>
+          </div>
+        </div>
+        <div class="kpi-card card-hover">
+          <div class="flex items-center gap-3">
+            <div class="bg-gray-200 p-3 rounded-full">
+              <i class="fas fa-pause-circle text-gray-600"></i>
+            </div>
+            <div>
+              <p class="text-xs text-gray-500">Tertinggal</p>
+              <p id="kpi-abu" class="text-xl font-bold text-gray-600">-</p>
+            </div>
+          </div>
+        </div>
+        <div class="kpi-card card-hover">
+          <div class="flex items-center gap-3">
+            <div class="bg-white border-2 p-3 rounded-full">
+              <i class="fas fa-hourglass-start text-gray-400"></i>
+            </div>
+            <div>
+              <p class="text-xs text-gray-500">Sangat Tertinggal</p>
+              <p id="kpi-putih" class="text-xl font-bold">-</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts Row -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+        <div class="panel p-4">
+          <h3 class="text-sm font-semibold text-gray-700 mb-3">
+            <i class="fas fa-chart-pie text-primary-500 mr-2"></i>Status Indikator IDM
+          </h3>
+          <div class="chart-container" style="height: 250px;">
+            <canvas id="chartBantuanStatus"></canvas>
+          </div>
+        </div>
+        <div class="panel p-4">
+          <h3 class="text-sm font-semibold text-gray-700 mb-3">
+            <i class="fas fa-chart-bar text-primary-500 mr-2"></i>Skor IKS, IKE, IKL
+          </h3>
+          <div class="chart-container" style="height: 250px;">
+            <canvas id="chartBantuanKab"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Map + Table -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div class="panel map-container-responsive" style="height: 400px;">
+          <div id="mapBantuan" class="h-full"></div>
+        </div>
+        <div class="panel p-4">
+          <h3 class="text-sm font-semibold text-gray-700 mb-3">
+            <i class="fas fa-table text-primary-500 mr-2"></i>Rincian Indikator
+          </h3>
+          <div class="overflow-x-auto max-h-80">
+            <table class="data-table text-sm w-full">
+              <thead>
+                <tr class="bg-gray-50">
+                  <th class="text-left p-3">Indikator</th>
+                  <th class="text-center p-3">Kode</th>
+                  <th class="text-right p-3">Skor</th>
+                  <th class="text-center p-3">Status</th>
+                </tr>
+              </thead>
+              <tbody id="tableBantuan">
+                <!-- Data rows -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+`;
 
 function isDashboardMainReady(src: string) {
   return (
