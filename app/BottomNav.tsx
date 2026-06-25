@@ -114,7 +114,7 @@ export default function BottomNav() {
       {/* ══ BOTTOM NAV ══ */}
       <nav className="fixed bottom-3 sm:bottom-5 left-1/2 -translate-x-1/2 z-[99999] pointer-events-none w-[90%] sm:w-auto max-w-[400px] sm:max-w-[680px]">
         <div
-          className="bg-gradient-to-r from-primary-900/70 via-primary-800/65 to-primary-900/70 border border-white/20 rounded-full p-1.5 flex items-center justify-between shadow-2xl pointer-events-auto sm:gap-1"
+          className="bg-gradient-to-r from-primary-900/85 via-primary-800/80 to-primary-900/85 border border-white/30 rounded-full p-1.5 flex items-center justify-between shadow-2xl pointer-events-auto sm:gap-1"
           style={{ backdropFilter: 'blur(25px)', WebkitBackdropFilter: 'blur(25px)' }}
         >
           {TABS.map((tab) => {
@@ -135,17 +135,17 @@ export default function BottomNav() {
                   className="text-[17px] sm:text-[19px] leading-none flex items-center justify-center" 
                   style={{ 
                     opacity: 1,
-                    filter: isActive ? 'none' : 'drop-shadow(0 1px 2px rgba(0,0,0,0.5))',
+                    filter: isActive ? 'none' : 'drop-shadow(0 1px 2px rgba(5, 46, 22, 0.8))',
                     transition: 'transform 0.15s, opacity 0.15s' 
                   }}
                 >
                   {tab.icon}
                 </span>
                 <span 
-                  className="text-[10.5px] sm:text-[12.5px] font-bold whitespace-nowrap" 
+                  className="text-[11.5px] sm:text-[13.5px] font-extrabold whitespace-nowrap" 
                   style={{ 
                     color: isActive ? tab.color : '#ffffff',
-                    textShadow: isActive ? 'none' : '0 1.5px 2.5px rgba(0, 0, 0, 0.7)'
+                    textShadow: isActive ? 'none' : '0 2px 3.5px rgba(5, 46, 22, 0.95)'
                   }}
                 >
                   {tab.label}

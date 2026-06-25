@@ -53,15 +53,15 @@ const HTML_CONTENT = `
 
   <!-- Header -->
   <header
-    class="bg-gradient-to-r from-primary-900/70 via-primary-800/65 to-primary-900/70 text-white shadow-lg sticky top-0 z-50 backdrop-blur-xl border-b border-white/15">
+    class="bg-gradient-to-r from-primary-900/85 via-primary-800/80 to-primary-900/85 text-white shadow-lg sticky top-0 z-50 backdrop-blur-xl border-b border-white/20">
     <div class="container-fluid px-2 md:px-4">
       <div class="flex items-center justify-between h-14 md:h-16">
         <!-- Logo & Title -->
         <a href="/" class="flex items-center gap-2 md:gap-3 min-w-0 flex-1 hover:opacity-90 transition-opacity">
           <img src="https://desaremaubakotuo.netlify.app/lovable-uploads/logo-desa.png" alt="Logo Desa Remau Bako Tuo" class="h-10 md:h-12 w-auto flex-shrink-0">
-          <div class="min-w-0" style="text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);">
-            <h1 class="text-sm md:text-lg font-bold truncate text-white">Desa Remau Bako Tuo</h1>
-            <p class="text-xs text-white font-medium block">Kabupaten Tanjung Jabung Timur</p>
+          <div class="min-w-0" style="text-shadow: 0 2px 3.5px rgba(5, 46, 22, 0.95);">
+            <h1 class="text-[15px] md:text-xl font-extrabold truncate text-white">Desa Remau Bako Tuo</h1>
+            <p class="text-[11.5px] md:text-sm font-semibold text-white block">Kabupaten Tanjung Jabung Timur</p>
           </div>
         </a>
 
@@ -72,9 +72,9 @@ const HTML_CONTENT = `
 
         <!-- Right Actions -->
         <div class="flex items-center gap-2 md:gap-4 flex-shrink-0">
-          <div class="text-right hidden sm:block" style="text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);">
-            <p class="text-xs text-white font-medium">Update Terakhir</p>
-            <p id="lastUpdate" class="text-xs md:text-sm font-semibold text-white">-</p>
+          <div class="text-right hidden sm:block" style="text-shadow: 0 2px 3.5px rgba(5, 46, 22, 0.95);">
+            <p class="text-[11px] md:text-xs font-semibold text-white/95">Update Terakhir</p>
+            <p id="lastUpdate" class="text-xs md:text-sm font-extrabold text-white">-</p>
           </div>
           <button onclick="refreshData()" class="bg-white/10 hover:bg-white/25 w-8 h-8 md:w-9 md:h-9 rounded-full flex items-center justify-center transition"
             title="Refresh Data">
