@@ -1,13 +1,18 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
+import DashboardLoading from './components/DashboardLoading';
+import {
+  DASHBOARD_EVENTS,
+  isDashboardInitComplete,
+  waitForDashboardInit,
+  type DashboardLoadingItem,
+  type LoadingItemStatus,
+} from './lib/dashboard-bridge';
+import { ensureDashboardScripts, installDashboardStubs } from './lib/load-dashboard-scripts';
+import { getInternalTabFromUrl } from './lib/dashboard-tabs';
 import './dashboard.css';
-
-const scriptLoadCache = new Map<string, Promise<void>>();
-let dashboardScriptsPromise: Promise<void> | null = null;
-
-const DASHBOARD_MAIN_SRC = '/js/dashboard-main.js';
 
 const HTML_CONTENT = `
   <!-- Toast Container -->
@@ -129,17 +134,6 @@ const HTML_CONTENT = `
 
   <!-- Main Content -->
   <main class="container-fluid px-2 md:px-4 py-4">
-    <!-- Loading Overlay -->
-    <div id="loadingOverlay" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
-      <div class="bg-white rounded-xl p-8 flex flex-col items-center gap-4 min-w-[280px]">
-        <div class="spinner"></div>
-        <p class="text-gray-700 font-medium">Memuat Data</p>
-        <ul id="loadingList" class="w-full space-y-2 text-sm">
-          <!-- Loading items will be populated by JavaScript -->
-        </ul>
-      </div>
-    </div>
-
     <!-- TAB: Profil Desa -->
     <div id="content-dampak" class="tab-content active">
       <!-- KPI Summary Cards -->
@@ -826,147 +820,119 @@ const HTML_CONTENT = `
     </div>
 `;
 
-function isDashboardMainReady(src: string) {
-  return (
-    src === DASHBOARD_MAIN_SRC &&
-    typeof (window as unknown as { __dashboardMainReady?: boolean }).__dashboardMainReady ===
-      'boolean' &&
-    (window as unknown as { __dashboardMainReady?: boolean }).__dashboardMainReady === true
-  );
-}
-
-function loadScript(src: string): Promise<void> {
-  const cached = scriptLoadCache.get(src);
-  if (cached) return cached;
-
-  const promise = new Promise<void>((resolve, reject) => {
-    let existing = document.querySelector(
-      `script[src="${src}"]`
-    ) as HTMLScriptElement | null;
-
-    if (existing?.dataset.loaded === 'true' && isDashboardMainReady(src)) {
-      resolve();
-      return;
-    }
-
-    if (existing?.dataset.loaded === 'true' && !isDashboardMainReady(src)) {
-      existing.remove();
-      scriptLoadCache.delete(src);
-      existing = null;
-    }
-
-    if (existing?.isConnected) {
-      existing.addEventListener('load', () => resolve(), { once: true });
-      existing.addEventListener(
-        'error',
-        () => reject(new Error(`Failed to load script: ${src}`)),
-        { once: true }
-      );
-      return;
-    }
-
-    const s = document.createElement('script');
-    s.src = src;
-    s.async = false;
-    s.onload = () => {
-      s.dataset.loaded = 'true';
-      resolve();
-    };
-    s.onerror = () => reject(new Error(`Failed to load script: ${src}`));
-    document.head.appendChild(s);
-  });
-
-  scriptLoadCache.set(src, promise);
-  return promise;
-}
-
-async function loadDashboardScripts() {
-  await loadScript('https://unpkg.com/leaflet@1.9.4/dist/leaflet.js');
-  await loadScript('https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js');
-  await loadScript('https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js');
-  await loadScript(
-    'https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js'
-  );
-  await loadScript('/js/dashboard-data.js');
-  await loadScript(DASHBOARD_MAIN_SRC);
-
-  if (!isDashboardMainReady(DASHBOARD_MAIN_SRC)) {
-    throw new Error('dashboard-main.js did not initialize');
-  }
-}
-
 export default function DashboardClient() {
   const searchParams = useSearchParams();
+  const [loading, setLoading] = useState(true);
+  const [phase, setPhase] = useState<'scripts' | 'data'>('scripts');
+  const [items, setItems] = useState<DashboardLoadingItem[]>([]);
+  const [ready, setReady] = useState(false);
 
-  // ── Sembunyikan nav bawaan dashboard (diganti oleh global BottomNav) ──
+  const syncTabFromUrl = useCallback(() => {
+    if (!isDashboardInitComplete() || typeof window.switchTab !== 'function') return;
+    const internalTab = getInternalTabFromUrl(searchParams?.get('tab'));
+    void window.switchTab(internalTab);
+  }, [searchParams]);
+
+  // Hide legacy nav elements replaced by React BottomNav
   useEffect(() => {
-    // Hide mobile overlay & drawer
     const mobileOverlay = document.getElementById('mobileMenuOverlay');
-    const mobileDrawer  = document.getElementById('mobileMenuDrawer');
-    const mobileBtn     = document.getElementById('mobileMenuBtn');
+    const mobileDrawer = document.getElementById('mobileMenuDrawer');
+    const mobileBtn = document.getElementById('mobileMenuBtn');
     if (mobileOverlay) mobileOverlay.style.display = 'none';
-    if (mobileDrawer)  mobileDrawer.style.display  = 'none';
-    if (mobileBtn)     mobileBtn.style.display      = 'none';
+    if (mobileDrawer) mobileDrawer.style.display = 'none';
+    if (mobileBtn) mobileBtn.style.display = 'none';
 
-    // Hide tab bar (3 levels up dari #tab-dampak: button → flex-div → container → sticky-wrapper)
     const tabDampak = document.getElementById('tab-dampak');
     if (tabDampak) {
       const tabBar = tabDampak.parentElement?.parentElement?.parentElement as HTMLElement | null;
       if (tabBar) tabBar.style.display = 'none';
     }
 
-    // Tambah padding bawah pada main agar tidak tertutup global nav
     const mainEl = document.querySelector('main') as HTMLElement | null;
     if (mainEl) mainEl.style.paddingBottom = '84px';
-  }, []); // run once on mount
+  }, []);
 
-  // ── Load scripts & auto-switch tab dari URL param ──
+  // Bridge legacy loading events → React loading UI
   useEffect(() => {
-    // Expose stubs to prevent ReferenceError before scripts load
-    const stubs = [
-      'refreshData', 'switchTab', 'focusMapOnCategory', 'changeSektorPage',
-      'applyFilter', 'resetFilters', 'toggleLayer', 'toggleFaskesLayer',
-      'togglePolygonLayer', 'applyCluster6Filter', 'changePolygonLevel',
-      'searchPolygon', 'onBantuanFilterChange', 'renderBantuanTable',
-      'slideOrangHilang', 'toggleMobileMenu', 'switchTabMobile', 'toggleLayerControl',
-    ];
-    stubs.forEach(fn => {
-      if (typeof (window as any)[fn] !== 'function') {
-        (window as any)[fn] = () => console.log('Dashboard is loading, please wait...');
+    const onLoading = (e: Event) => {
+      const visible = (e as CustomEvent<{ visible: boolean }>).detail.visible;
+      if (visible) {
+        setLoading(true);
+        setPhase('data');
       }
-    });
-
-    if (!dashboardScriptsPromise) {
-      dashboardScriptsPromise = loadDashboardScripts().catch((e) => {
-        dashboardScriptsPromise = null;
-        console.error('Script load error:', e);
-        throw e;
-      });
-    }
-
-    // Auto-switch tab berdasarkan ?tab= dari URL
-    const requestedTab = searchParams?.get('tab');
-    const validTabsMap: Record<string, string> = {
-      'profil': 'dampak',
-      'peta': 'peta-operasi',
-      'pembangunan': 'pengungsi',
-      'indeks': 'bantuan'
     };
-    if (requestedTab && validTabsMap[requestedTab]) {
-      const internalTabId = validTabsMap[requestedTab];
-      dashboardScriptsPromise?.then(() => {
-        setTimeout(() => {
-          const switchTab = (window as any).switchTab;
-          if (typeof switchTab === 'function') {
-            switchTab(internalTabId);
-          }
-        }, 300);
+
+    const onLoadingItems = (e: Event) => {
+      const labels = (e as CustomEvent<{ items: string[] }>).detail.items;
+      setItems(labels.map((label) => ({ label, status: 'pending' as LoadingItemStatus })));
+      setPhase('data');
+      setLoading(true);
+    };
+
+    const onLoadingItem = (e: Event) => {
+      const { index, status } = (e as CustomEvent<{ index: number; status: LoadingItemStatus }>).detail;
+      setItems((prev) =>
+        prev.map((item, i) => (i === index ? { ...item, status } : item))
+      );
+    };
+
+    const onInitComplete = () => {
+      setLoading(false);
+      setReady(true);
+    };
+
+    window.addEventListener(DASHBOARD_EVENTS.LOADING, onLoading);
+    window.addEventListener(DASHBOARD_EVENTS.LOADING_ITEMS, onLoadingItems);
+    window.addEventListener(DASHBOARD_EVENTS.LOADING_ITEM, onLoadingItem);
+    window.addEventListener(DASHBOARD_EVENTS.INIT_COMPLETE, onInitComplete);
+
+    return () => {
+      window.removeEventListener(DASHBOARD_EVENTS.LOADING, onLoading);
+      window.removeEventListener(DASHBOARD_EVENTS.LOADING_ITEMS, onLoadingItems);
+      window.removeEventListener(DASHBOARD_EVENTS.LOADING_ITEM, onLoadingItem);
+      window.removeEventListener(DASHBOARD_EVENTS.INIT_COMPLETE, onInitComplete);
+    };
+  }, []);
+
+  // Load legacy scripts once, then wait for init
+  useEffect(() => {
+    let cancelled = false;
+
+    installDashboardStubs();
+    window.__dashboardInitialTab = getInternalTabFromUrl(searchParams?.get('tab'));
+    setLoading(true);
+    setPhase('scripts');
+
+    ensureDashboardScripts()
+      .then(() => waitForDashboardInit())
+      .then(() => {
+        if (!cancelled) {
+          setLoading(false);
+          setReady(true);
+        }
+      })
+      .catch((e) => {
+        console.error('Dashboard load error:', e);
+        if (!cancelled) setLoading(false);
       });
-    }
 
-    void dashboardScriptsPromise;
-  }, [searchParams]);
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- run once on mount; initial tab set above
+  }, []);
 
-  return <div dangerouslySetInnerHTML={{ __html: HTML_CONTENT }} />;
+  // Sync tab when URL changes after dashboard is ready
+  useEffect(() => {
+    if (!ready) return;
+    syncTabFromUrl();
+  }, [ready, syncTabFromUrl]);
+
+  return (
+    <>
+      <DashboardLoading visible={loading} phase={phase} items={items} />
+      <div dangerouslySetInnerHTML={{ __html: HTML_CONTENT }} />
+    </>
+  );
 }
 

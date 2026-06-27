@@ -2,6 +2,8 @@
 
 import { usePathname, useSearchParams, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
+import { DASHBOARD_EVENTS, isDashboardInitComplete } from './lib/dashboard-bridge';
+import { TAB_URL_TO_INTERNAL } from './lib/dashboard-tabs';
 
 const TABS = [
   {
@@ -77,9 +79,18 @@ export default function BottomNav() {
   const searchParams = useSearchParams();
   const router       = useRouter();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [dashboardReady, setDashboardReady] = useState(false);
 
   const currentTab  = searchParams?.get('tab') ?? '';
   const isDashboard = pathname === '/dashboard';
+
+  useEffect(() => {
+    if (isDashboardInitComplete()) setDashboardReady(true);
+
+    const onReady = () => setDashboardReady(true);
+    window.addEventListener(DASHBOARD_EVENTS.INIT_COMPLETE, onReady);
+    return () => window.removeEventListener(DASHBOARD_EVENTS.INIT_COMPLETE, onReady);
+  }, []);
 
   /* Tutup drawer dengan Escape */
   useEffect(() => {
@@ -98,12 +109,11 @@ export default function BottomNav() {
 
   const handleClick = (tabId: string) => {
     if (isDashboard) {
-      const switchTab = (window as any).switchTab;
-      if (typeof switchTab === 'function') {
-        const tabDef = TABS.find(t => t.id === tabId);
-        if (tabDef) switchTab(tabDef.internalId);
-      }
       router.push(`/dashboard?tab=${tabId}`, { scroll: false });
+      if (dashboardReady && typeof window.switchTab === 'function') {
+        const internalId = TAB_URL_TO_INTERNAL[tabId];
+        if (internalId) void window.switchTab(internalId);
+      }
     } else {
       window.location.href = `/dashboard?tab=${tabId}`;
     }
@@ -119,17 +129,19 @@ export default function BottomNav() {
         >
           {TABS.map((tab) => {
             const isActive = isDashboard && currentTab === tab.id;
+            const isDisabled = isDashboard && !dashboardReady;
             return (
               <button
                 key={tab.id}
                 onClick={() => handleClick(tab.id)}
-                title={tab.label}
+                disabled={isDisabled}
+                title={isDisabled ? 'Memuat dashboard...' : tab.label}
                 style={isActive ? { background: '#ffffff', color: tab.color, borderColor: tab.border } : {}}
                 className={`flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 px-2.5 py-1 sm:px-5 sm:py-2.5 rounded-full transition-all duration-200 outline-none flex-1 sm:flex-none border ${
                   isActive 
                     ? 'shadow-md' 
                     : 'bg-transparent text-white hover:bg-white/10 border-transparent'
-                }`}
+                }${isDisabled ? ' opacity-50 cursor-wait' : ''}`}
               >
                 <i 
                   className={`fas ${tab.icon} text-[15px] sm:text-[17px]`}

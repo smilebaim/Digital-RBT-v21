@@ -3,6 +3,11 @@
  * Custom styles for the disaster monitoring dashboard
  */
 
+/* === Utility === */
+.hidden {
+  display: none !important;
+}
+
 /* === Base Styles === */
 :root {
   --dashboard-bg: #ffffff;

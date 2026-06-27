@@ -234,41 +234,19 @@ const localCache = {
 // UTILITY FUNCTIONS
 // =====================================================
 function showLoading() {
-  document.getElementById('loadingOverlay').classList.remove('hidden');
+  window.dispatchEvent(new CustomEvent('dashboard:loading', { detail: { visible: true } }));
 }
 
 function initLoadingList(items) {
-  const list = document.getElementById('loadingList');
-  if (!list) return;
-  list.innerHTML = items
-    .map(
-      (item, index) => `
-      <li id="loading-item-${index}" class="flex items-center gap-2 text-gray-400">
-        <i class="fas fa-circle text-[8px]"></i>
-        <span>${item}</span>
-      </li>
-    `
-    )
-    .join('');
+  window.dispatchEvent(new CustomEvent('dashboard:loading-items', { detail: { items } }));
 }
 
 function updateLoadingItem(index, status) {
-  const item = document.getElementById(`loading-item-${index}`);
-  if (!item) return;
-  if (status === 'loading') {
-    item.className = 'flex items-center gap-2 text-blue-600';
-    item.querySelector('i').className = 'fas fa-spinner fa-spin text-[10px]';
-  } else if (status === 'done') {
-    item.className = 'flex items-center gap-2 text-green-600';
-    item.querySelector('i').className = 'fas fa-check text-[10px]';
-  } else if (status === 'error') {
-    item.className = 'flex items-center gap-2 text-red-600';
-    item.querySelector('i').className = 'fas fa-times text-[10px]';
-  }
+  window.dispatchEvent(new CustomEvent('dashboard:loading-item', { detail: { index, status } }));
 }
 
 function hideLoading() {
-  document.getElementById('loadingOverlay').classList.add('hidden');
+  window.dispatchEvent(new CustomEvent('dashboard:loading', { detail: { visible: false } }));
 }
 
 // Skeleton loading for KPI cards
@@ -1007,6 +985,8 @@ async function loadTabData(tabId, forceReload = false) {
     return false;
   } finally {
     if (isInitialLoad) {
+      hideSkeletons();
+    } else {
       hideLoading();
       hideSkeletons();
     }
@@ -5896,19 +5876,26 @@ async function refreshAllTabsData() {
 
 async function init() {
   const startTime = performance.now();
-  const initialTab = state.currentTab || 'dampak';
+  const initialTab = window.__dashboardInitialTab || state.currentTab || 'dampak';
+  state.currentTab = initialTab;
 
   console.log('[Init] LocalStorage cache stats:', localCache.stats());
 
-  await loadTabData(initialTab);
-  await switchTab(initialTab);
+  try {
+    await loadTabData(initialTab);
+    await switchTab(initialTab);
+    hideLoading();
 
-  const loadTime = ((performance.now() - startTime) / 1000).toFixed(2);
-  console.log(`[Init] Dashboard loaded in ${loadTime}s (lazy loading enabled)`);
+    const loadTime = ((performance.now() - startTime) / 1000).toFixed(2);
+    console.log(`[Init] Dashboard loaded in ${loadTime}s (lazy loading enabled)`);
 
-  setTimeout(() => {
-    preloadOtherTabs();
-  }, 2000);
+    setTimeout(() => {
+      preloadOtherTabs();
+    }, 2000);
+  } finally {
+    window.__dashboardInitComplete = true;
+    window.dispatchEvent(new CustomEvent('dashboard:init-complete'));
+  }
 }
 
 /**
