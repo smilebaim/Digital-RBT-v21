@@ -25,7 +25,7 @@ const TABS = [
   {
     id: 'pembangunan',
     internalId: 'pengungsi',
-    label: 'Pembangunan',
+    label: 'Program',
     icon: 'fa-hammer',
     color: '#0369a1',
     bg: '#f0f9ff',
@@ -54,7 +54,7 @@ const DRAWER_MENU = [
   },
   {
     label: 'Ekonomi',
-    sub: 'Program & Anggaran Pembangunan',
+    sub: 'Program & Anggaran',
     href: '/dashboard?tab=pembangunan',
     icon: 'fa-hammer',
     color: '#0369a1',

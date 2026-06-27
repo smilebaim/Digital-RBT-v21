@@ -47,7 +47,7 @@ export const APBDES = {
 
 export const BIDANG_APBDES = [
   { nama: "Penyelenggaraan Pemerintahan Desa", pagu: 380_000_000, realisasi: 365_400_000 },
-  { nama: "Pembangunan Desa",                  pagu: 680_000_000, realisasi: 645_200_000 },
+  { nama: "Program Desa",                  pagu: 680_000_000, realisasi: 645_200_000 },
   { nama: "Pembinaan Kemasyarakatan",          pagu: 180_000_000, realisasi: 168_500_000 },
   { nama: "Pemberdayaan Masyarakat",           pagu: 280_000_000, realisasi: 260_750_000 },
   { nama: "Penanggulangan Bencana & Darurat",  pagu:  80_750_000, realisasi:  75_000_000 },
@@ -95,7 +95,7 @@ export const IDM_INDIKATOR = {
 
 // ── Konteks umum ──────────────────────────────────────────────────────────────
 export const SEKTOR = [
-  "Pemerintahan", "Pembangunan", "Pembinaan", "Pemberdayaan",
+  "Pemerintahan", "Program", "Pembinaan", "Pemberdayaan",
   "Lingkungan", "Kesehatan", "Pendidikan", "Ekonomi",
 ];
 export const STATUS_JARINGAN = ["critical", "warning", "normal"];

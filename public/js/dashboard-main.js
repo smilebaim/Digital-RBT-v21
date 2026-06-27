@@ -784,7 +784,7 @@ const TAB_DATA_SOURCES = {
     sources: [
       { key: 'bencana', label: 'Data Profil Desa', fetch: () => fetchAPI('/realtime/bencana') },
       { key: 'clusterData', label: 'Data IDM & Program', fetch: () => fetchClusterData() },
-      { key: 'pertanianData', label: 'Data Program Pembangunan', fetch: () => fetchPertanianData() },
+      { key: 'pertanianData', label: 'Data Program', fetch: () => fetchPertanianData() },
       { key: 'pendudukData', label: 'Data APBDes', fetch: () => fetchPendudukData() },
     ],
     process: (results) => {
@@ -869,7 +869,7 @@ const TAB_DATA_SOURCES = {
       { key: 'pendudukData', label: 'Data Penduduk & APBDes', fetch: () => fetchPendudukData() },
       { key: 'orangHilangData', label: 'Data Program Unggulan', fetch: () => fetchOrangHilangData() },
       { key: 'poskoData', label: 'Data Titik Penting', fetch: () => fetchSupabaseEndpoint('posko', 'supabase:posko', true, 'default') },
-      { key: 'pertanianData', label: 'Data Program Pembangunan', fetch: () => fetchPertanianData() },
+      { key: 'pertanianData', label: 'Data Program', fetch: () => fetchPertanianData() },
     ],
     process: (results) => {
       const pendudukData = results.pendudukData;
@@ -4286,7 +4286,7 @@ function renderPengungsiTable() {
   const pertanian = state.data.pertanian || [];
 
   if (pertanian.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-gray-400">Tidak ada data program pembangunan</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-gray-400">Tidak ada data program</td></tr>';
     return;
   }
 

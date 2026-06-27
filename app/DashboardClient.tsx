@@ -37,7 +37,7 @@ const HTML_CONTENT = `
         </div>
         <div class="mobile-menu-item" onclick="switchTabMobile('pengungsi')">
           <i class="fas fa-hammer"></i>
-          <span>Pembangunan</span>
+          <span>Program</span>
         </div>
         <div class="mobile-menu-item" onclick="switchTabMobile('bantuan')">
           <i class="fas fa-chart-line"></i>
@@ -115,8 +115,8 @@ const HTML_CONTENT = `
         </button>
         <button onclick="switchTab('pengungsi')" id="tab-pengungsi"
           class="tab-btn flex-1 md:flex-none px-3 md:px-6 py-2 md:py-3 text-xs md:text-sm font-medium text-gray-600 hover:text-primary-600 whitespace-nowrap">
-          <i class="fas fa-hammer mr-1 md:mr-2"></i><span class="hidden xs:inline">Pembangunan</span><span
-            class="xs:hidden">Pembangunan</span>
+          <i class="fas fa-hammer mr-1 md:mr-2"></i><span class="hidden xs:inline">Program</span><span
+            class="xs:hidden">Program</span>
         </button>
         <button onclick="switchTab('bantuan')" id="tab-bantuan"
           class="tab-btn flex-1 md:flex-none px-3 md:px-6 py-2 md:py-3 text-xs md:text-sm font-medium text-gray-600 hover:text-primary-600 whitespace-nowrap">
@@ -314,11 +314,11 @@ const HTML_CONTENT = `
         </div>
       </div>
 
-      <!-- Program Pembangunan Section -->
+      <!-- Program Section -->
       <div class="panel p-4 mt-4">
         <div class="flex items-center justify-between mb-3">
           <h3 class="text-sm font-semibold text-gray-700">
-            <i class="fas fa-hard-hat text-green-500 mr-2"></i>Program Pembangunan Desa
+            <i class="fas fa-hard-hat text-green-500 mr-2"></i>Program Desa
             <span id="pertanian-total"
               class="ml-2 px-2 py-0.5 bg-green-100 text-green-700 rounded text-xs font-bold">0</span>
           </h3>
@@ -579,7 +579,7 @@ const HTML_CONTENT = `
       </div>
     </div>
 
-    <!-- TAB: Pembangunan (Dana Desa) -->
+    <!-- TAB: Program (Dana Desa) -->
     <div id="content-pengungsi" class="tab-content">
       <!-- KPI Cards -->
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
