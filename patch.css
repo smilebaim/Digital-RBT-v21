@@ -1,0 +1,31 @@
+/* Responsive layout adjustments */
+@media (max-width: 1024px) {
+  main {
+    padding-bottom: 70px;
+  }
+}
+@media (max-width: 768px) {
+  main {
+    padding-bottom: 85px;
+  }
+  .data-table th, .data-table td {
+    padding: 0.5rem;
+    font-size: 0.75rem;
+  }
+  .panel {
+    padding: 12px;
+  }
+  /* Improve layout for navigation elements */
+  .bottom-nav-container {
+    width: 95% !important;
+  }
+}
+@media (max-width: 480px) {
+  .grid-cols-2 {
+    grid-template-columns: repeat(1, minmax(0, 1fr)) !important;
+  }
+  .data-table th, .data-table td {
+    padding: 0.25rem;
+    font-size: 0.7rem;
+  }
+}
