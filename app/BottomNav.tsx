@@ -34,6 +34,15 @@ const TABS = [
     border: '#bae6fd',
   },
   {
+    id: 'dana-desa',
+    internalId: 'pengungsi',
+    label: 'Dana Desa',
+    icon: 'fa-wallet',
+    color: '#000000',
+    bg: '#ecfdf5',
+    border: '#a7f3d0',
+  },
+  {
     id: 'indeks',
     internalId: 'bantuan',
     label: 'Indeks',
@@ -62,6 +71,15 @@ const DRAWER_MENU = [
     color: '#000000',
     bg: '#f0f9ff',
     border: '#bae6fd',
+  },
+  {
+    label: 'Dana Desa',
+    sub: 'Realisasi Anggaran & APBDes',
+    href: '/dashboard?tab=dana-desa',
+    icon: 'fa-wallet',
+    color: '#000000',
+    bg: '#ecfdf5',
+    border: '#a7f3d0',
   },
   {
     label: 'Layanan',
@@ -122,7 +140,7 @@ function BottomNavInner() {
   return (
     <>
       {/* ══ BOTTOM NAV ══ */}
-      <nav className="fixed bottom-3 sm:bottom-5 left-1/2 -translate-x-1/2 z-[99999] pointer-events-none w-[90%] sm:w-auto max-w-[400px] sm:max-w-[680px]">
+      <nav className="fixed bottom-3 sm:bottom-5 left-1/2 -translate-x-1/2 z-[99999] pointer-events-none w-[90%] sm:w-auto max-w-[500px] sm:max-w-[760px]">
         <div
           className="border border-white/50 bg-white/40 backdrop-blur-md rounded-full p-1.5 flex items-center justify-between shadow-[0_8px_32px_rgba(0,0,0,0.15)] pointer-events-auto sm:gap-1"
           style={{ animation: 'fadeInUpNav 0.5s ease forwards' }}

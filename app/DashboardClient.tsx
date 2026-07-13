@@ -44,6 +44,10 @@ const HTML_CONTENT = `
           <i class="fas fa-hammer"></i>
           <span>Program</span>
         </div>
+        <div class="mobile-menu-item" onclick="switchTabMobile('pengungsi')">
+          <i class="fas fa-wallet"></i>
+          <span>Dana Desa</span>
+        </div>
         <div class="mobile-menu-item" onclick="switchTabMobile('bantuan')">
           <i class="fas fa-chart-line"></i>
           <span>Indeks</span>

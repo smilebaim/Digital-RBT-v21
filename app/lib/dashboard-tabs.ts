@@ -3,6 +3,7 @@ export const TAB_URL_TO_INTERNAL: Record<string, string> = {
   profil: 'dampak',
   peta: 'peta-operasi',
   pembangunan: 'pengungsi',
+  'dana-desa': 'pengungsi',
   indeks: 'bantuan',
 };
 
