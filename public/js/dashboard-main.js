@@ -1144,6 +1144,9 @@ async function switchTab(tabId) {
         case 'bantuan':
           renderBantuanTab();
           break;
+        case 'kelembagaan':
+          // Kelembagaan tab is static/React-based, nothing extra to render
+          break;
       }
     }
 
@@ -3395,6 +3398,8 @@ function renderCurrentTabWithFilter() {
     case 'bantuan':
       renderBantuanTable();
       break;
+    case 'kelembagaan':
+      break;
   }
 }
 
@@ -3692,7 +3697,11 @@ function renderPengungsiChartsFiltered(disabilitasFiltered) {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } },
+        legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } },
+  kelembagaan: {
+    sources: [],
+    process: (results) => {}
+  } },
       },
     },
   });

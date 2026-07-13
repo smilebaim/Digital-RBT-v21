@@ -55,6 +55,15 @@ const TABS = [
 
 const DRAWER_MENU = [
   {
+    label: 'Kelembagaan',
+    sub: 'Lembaga Kemasyarakatan & Adat',
+    href: '/dashboard?tab=kelembagaan',
+    icon: 'fa-users',
+    color: '#000000',
+    bg: '#fef2f2',
+    border: '#fecaca',
+  },
+  {
     label: 'Literasi',
     sub: 'Data Indeks Desa Membangun',
     href: '/dashboard?tab=indeks',

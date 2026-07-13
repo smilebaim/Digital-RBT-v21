@@ -5,6 +5,7 @@ export const TAB_URL_TO_INTERNAL: Record<string, string> = {
   pembangunan: 'pengungsi',
   'dana-desa': 'pengungsi',
   indeks: 'bantuan',
+  kelembagaan: 'kelembagaan',
 };
 
 export const DEFAULT_TAB_URL = 'profil';

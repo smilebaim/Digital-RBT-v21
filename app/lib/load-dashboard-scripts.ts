@@ -91,6 +91,7 @@ export function installDashboardStubs(): void {
     'togglePolygonLayer', 'applyCluster6Filter', 'changePolygonLevel',
     'searchPolygon', 'onBantuanFilterChange', 'renderBantuanTable',
     'slideOrangHilang', 'toggleMobileMenu', 'switchTabMobile', 'toggleLayerControl',
+    'switchInstitutionTab',
   ];
   stubs.forEach((fn) => {
     if (typeof (window as unknown as Record<string, unknown>)[fn] !== 'function') {

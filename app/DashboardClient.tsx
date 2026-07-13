@@ -847,6 +847,434 @@ const HTML_CONTENT = `
         </div>
       </div>
     </div>
+
+    <!-- TAB: Kelembagaan Desa -->
+    <div id="content-kelembagaan" class="tab-content">
+      <!-- KPI Cards -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div class="kpi-card card-hover p-4 bg-white rounded-xl shadow-sm border border-black/5 flex items-center justify-between">
+          <div>
+            <p class="text-xs text-gray-500 mb-1">Jumlah Lembaga</p>
+            <p class="text-2xl font-bold text-gray-800">6 Lembaga</p>
+          </div>
+          <div class="bg-red-50 p-3 rounded-full text-red-600">
+            <i class="fas fa-sitemap text-lg"></i>
+          </div>
+        </div>
+        <div class="kpi-card card-hover p-4 bg-white rounded-xl shadow-sm border border-black/5 flex items-center justify-between">
+          <div>
+            <p class="text-xs text-gray-500 mb-1">Total Pengurus</p>
+            <p class="text-2xl font-bold text-gray-800">48 Orang</p>
+          </div>
+          <div class="bg-green-50 p-3 rounded-full text-green-600">
+            <i class="fas fa-user-shield text-lg"></i>
+          </div>
+        </div>
+        <div class="kpi-card card-hover p-4 bg-white rounded-xl shadow-sm border border-black/5 flex items-center justify-between">
+          <div>
+            <p class="text-xs text-gray-500 mb-1">Program Aktif</p>
+            <p class="text-2xl font-bold text-gray-800">12 Kegiatan</p>
+          </div>
+          <div class="bg-blue-50 p-3 rounded-full text-blue-600">
+            <i class="fas fa-tasks text-lg"></i>
+          </div>
+        </div>
+        <div class="kpi-card card-hover p-4 bg-white rounded-xl shadow-sm border border-black/5 flex items-center justify-between">
+          <div>
+            <p class="text-xs text-gray-500 mb-1">Kemitraan</p>
+            <p class="text-2xl font-bold text-gray-800">4 Sektor</p>
+          </div>
+          <div class="bg-purple-50 p-3 rounded-full text-purple-600">
+            <i class="fas fa-handshake text-lg"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Columns -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Left Side: Interactive Menu List of Institutions -->
+        <div class="lg:col-span-1 space-y-3">
+          <div class="panel p-4 bg-white rounded-xl shadow-sm border border-black/5">
+            <h3 class="text-sm font-semibold text-gray-700 mb-4">
+              <i class="fas fa-landmark text-primary-500 mr-2"></i>Daftar Kelembagaan
+            </h3>
+            <div class="space-y-2">
+              <button onclick="switchInstitutionTab('pemdes')" id="inst-btn-pemdes" class="w-full text-left p-3 rounded-xl border border-primary-100 bg-primary-50/50 text-primary-700 font-medium transition-all flex items-center justify-between hover:bg-primary-50 inst-tab-btn active">
+                <span class="flex items-center gap-3"><i class="fas fa-building text-base w-5 text-center"></i> Pemerintah Desa (Pemdes)</span>
+                <i class="fas fa-chevron-right text-xs"></i>
+              </button>
+              <button onclick="switchInstitutionTab('bpd')" id="inst-btn-bpd" class="w-full text-left p-3 rounded-xl border border-gray-100 bg-transparent text-gray-700 font-normal transition-all flex items-center justify-between hover:bg-gray-50 inst-tab-btn">
+                <span class="flex items-center gap-3"><i class="fas fa-gavel text-base w-5 text-center"></i> Badan Permusyawaratan (BPD)</span>
+                <i class="fas fa-chevron-right text-xs"></i>
+              </button>
+              <button onclick="switchInstitutionTab('pkk')" id="inst-btn-pkk" class="w-full text-left p-3 rounded-xl border border-gray-100 bg-transparent text-gray-700 font-normal transition-all flex items-center justify-between hover:bg-gray-50 inst-tab-btn">
+                <span class="flex items-center gap-3"><i class="fas fa-female text-base w-5 text-center"></i> Pemberdayaan Keluarga (PKK)</span>
+                <i class="fas fa-chevron-right text-xs"></i>
+              </button>
+              <button onclick="switchInstitutionTab('karang-taruna')" id="inst-btn-karang-taruna" class="w-full text-left p-3 rounded-xl border border-gray-100 bg-transparent text-gray-700 font-normal transition-all flex items-center justify-between hover:bg-gray-50 inst-tab-btn">
+                <span class="flex items-center gap-3"><i class="fas fa-users-cog text-base w-5 text-center"></i> Karang Taruna</span>
+                <i class="fas fa-chevron-right text-xs"></i>
+              </button>
+              <button onclick="switchInstitutionTab('lpm')" id="inst-btn-lpm" class="w-full text-left p-3 rounded-xl border border-gray-100 bg-transparent text-gray-700 font-normal transition-all flex items-center justify-between hover:bg-gray-50 inst-tab-btn">
+                <span class="flex items-center gap-3"><i class="fas fa-shield-alt text-base w-5 text-center"></i> LPM / Lembaga Adat</span>
+                <i class="fas fa-chevron-right text-xs"></i>
+              </button>
+              <button onclick="switchInstitutionTab('bumdes')" id="inst-btn-bumdes" class="w-full text-left p-3 rounded-xl border border-gray-100 bg-transparent text-gray-700 font-normal transition-all flex items-center justify-between hover:bg-gray-50 inst-tab-btn">
+                <span class="flex items-center gap-3"><i class="fas fa-store text-base w-5 text-center"></i> BUMDesa</span>
+                <i class="fas fa-chevron-right text-xs"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Quick Information -->
+          <div class="panel p-4 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl shadow-md text-white">
+            <h4 class="font-bold mb-1 text-sm"><i class="fas fa-info-circle mr-2"></i>Sinergi & Kemitraan</h4>
+            <p class="text-xs text-white/85 leading-relaxed">Kelembagaan Desa Remau Bako Tuo bergerak aktif dan bersinergi demi mewujudkan tata kelola desa yang transparan, maju, mandiri, dan berbudaya luhur.</p>
+          </div>
+        </div>
+
+        <!-- Right Side: Content display for the active Institution -->
+        <div class="lg:col-span-2">
+          
+          <!-- Tab 1: PEMERINTAH DESA (PEMDES) -->
+          <div id="inst-content-pemdes" class="panel p-5 bg-white rounded-xl shadow-sm border border-black/5 inst-content-panel active">
+            <div class="flex items-center justify-between border-b border-gray-100 pb-3 mb-4">
+              <div>
+                <h3 class="text-lg font-bold text-gray-800">Pemerintah Desa (PEMDES)</h3>
+                <p class="text-xs text-gray-500">Struktur Organisasi dan Tata Kerja Pemerintah Desa</p>
+              </div>
+              <span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-semibold">Aktif</span>
+            </div>
+            
+            <p class="text-sm text-gray-600 mb-6 leading-relaxed">
+              Pemerintah Desa adalah penyelenggara urusan pemerintahan dan kepentingan masyarakat setempat dalam sistem pemerintahan Negara Kesatuan Republik Indonesia. Dipimpin oleh Kepala Desa dan dibantu oleh perangkat desa.
+            </p>
+
+            <h4 class="text-sm font-semibold text-gray-700 mb-3"><i class="fas fa-users text-blue-500 mr-2"></i>Struktur Kepengurusan Utama</h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              <div class="p-4 bg-gray-50 rounded-xl border border-gray-100 flex items-center gap-3">
+                <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-lg font-bold">K</div>
+                <div>
+                  <h5 class="text-sm font-bold text-gray-800">H. Herman, S.Sos</h5>
+                  <p class="text-xs text-blue-600 font-semibold mb-0.5">Kepala Desa</p>
+                  <p class="text-[10px] text-gray-400">Masa Jabatan: 2021 - 2027</p>
+                </div>
+              </div>
+              <div class="p-4 bg-gray-50 rounded-xl border border-gray-100 flex items-center gap-3">
+                <div class="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-lg font-bold">S</div>
+                <div>
+                  <h5 class="text-sm font-bold text-gray-800">Ahmad Faisal, S.E</h5>
+                  <p class="text-xs text-indigo-600 font-semibold mb-0.5">Sekretaris Desa</p>
+                  <p class="text-[10px] text-gray-400">NIP. 19850312 201101 1 002</p>
+                </div>
+              </div>
+              <div class="p-4 bg-gray-50 rounded-xl border border-gray-100 flex items-center gap-3">
+                <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center text-lg font-bold">K</div>
+                <div>
+                  <h5 class="text-sm font-bold text-gray-800">Siti Rahma</h5>
+                  <p class="text-xs text-emerald-600 font-semibold mb-0.5">Kaur Keuangan (Bendahara)</p>
+                  <p class="text-[10px] text-gray-400">Sistem Siskeudes Online</p>
+                </div>
+              </div>
+              <div class="p-4 bg-gray-50 rounded-xl border border-gray-100 flex items-center gap-3">
+                <div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center text-lg font-bold">P</div>
+                <div>
+                  <h5 class="text-sm font-bold text-gray-800">Budi Santoso</h5>
+                  <p class="text-xs text-amber-600 font-semibold mb-0.5">Kasi Pemerintahan</p>
+                  <p class="text-[10px] text-gray-400">Layanan Adminduk Terpadu</p>
+                </div>
+              </div>
+            </div>
+
+            <h4 class="text-sm font-semibold text-gray-700 mb-3"><i class="fas fa-calendar-check text-emerald-500 mr-2"></i>Agenda & Prioritas Kerja</h4>
+            <div class="space-y-2">
+              <div class="p-3 bg-green-50/50 rounded-lg border border-green-100 flex items-start gap-3">
+                <span class="bg-green-100 text-green-700 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">1</span>
+                <div>
+                  <h5 class="text-xs font-bold text-green-800">Peningkatan Digitalisasi Layanan Desa</h5>
+                  <p class="text-[11px] text-gray-600 mt-0.5">Pengembangan Sistem Informasi Desa (SID) untuk pelayanan surat-menyurat mandiri bagi warga.</p>
+                </div>
+              </div>
+              <div class="p-3 bg-blue-50/50 rounded-lg border border-blue-100 flex items-start gap-3">
+                <span class="bg-blue-100 text-blue-700 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">2</span>
+                <div>
+                  <h5 class="text-xs font-bold text-blue-800">Pembangunan Infrastruktur Berkelanjutan</h5>
+                  <p class="text-[11px] text-gray-600 mt-0.5">Fokus pada jalan usaha tani, sanitasi pemukiman, dan jembatan penghubung dusun di tahun anggaran berjalan.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tab 2: BPD -->
+          <div id="inst-content-bpd" class="panel p-5 bg-white rounded-xl shadow-sm border border-black/5 inst-content-panel hidden">
+            <div class="flex items-center justify-between border-b border-gray-100 pb-3 mb-4">
+              <div>
+                <h3 class="text-lg font-bold text-gray-800">Badan Permusyawaratan Desa (BPD)</h3>
+                <p class="text-xs text-gray-500">Lembaga Legislatif Tingkat Desa</p>
+              </div>
+              <span class="bg-amber-100 text-amber-700 px-3 py-1 rounded-full text-xs font-semibold">Aktif</span>
+            </div>
+
+            <p class="text-sm text-gray-600 mb-6 leading-relaxed">
+              BPD adalah lembaga yang melaksanakan fungsi pemerintahan yang anggotanya merupakan wakil dari penduduk desa berdasarkan keterwakilan wilayah dan ditetapkan secara demokratis. BPD bertugas membahas dan menyepakati rancangan peraturan desa bersama kepala desa serta mengawasi kinerja pemerintah desa.
+            </p>
+
+            <h4 class="text-sm font-semibold text-gray-700 mb-3"><i class="fas fa-users text-amber-500 mr-2"></i>Kepengurusan BPD</h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              <div class="p-4 bg-gray-50 rounded-xl border border-gray-100 flex items-center gap-3">
+                <div class="w-12 h-12 bg-amber-100 text-amber-700 rounded-full flex items-center justify-center text-lg font-bold">K</div>
+                <div>
+                  <h5 class="text-sm font-bold text-gray-800">Ir. H. Syarifuddin</h5>
+                  <p class="text-xs text-amber-700 font-semibold mb-0.5">Ketua BPD</p>
+                  <p class="text-[10px] text-gray-400">Wakil Dusun Makmur</p>
+                </div>
+              </div>
+              <div class="p-4 bg-gray-50 rounded-xl border border-gray-100 flex items-center gap-3">
+                <div class="w-12 h-12 bg-gray-100 text-gray-600 rounded-full flex items-center justify-center text-lg font-bold">W</div>
+                <div>
+                  <h5 class="text-sm font-bold text-gray-800">M. Ridwan, S.Pd</h5>
+                  <p class="text-xs text-gray-600 font-semibold mb-0.5">Wakil Ketua BPD</p>
+                  <p class="text-[10px] text-gray-400">Wakil Dusun Sejahtera</p>
+                </div>
+              </div>
+            </div>
+
+            <h4 class="text-sm font-semibold text-gray-700 mb-3"><i class="fas fa-check-double text-indigo-500 mr-2"></i>Fungsi & Kegiatan Terbaru</h4>
+            <ul class="space-y-3 text-xs text-gray-600">
+              <li class="flex items-start gap-2">
+                <i class="fas fa-check text-green-500 mt-0.5"></i>
+                <div>
+                  <strong>Penyusunan Perdes APBDes 2026:</strong> Telah menyepakati bersama rancangan peraturan desa tentang Anggaran Pendapatan dan Belanja Desa (APBDes) Tahun Anggaran 2026 pada tanggal 15 Desember 2025.
+                </div>
+              </li>
+              <li class="flex items-start gap-2">
+                <i class="fas fa-check text-green-500 mt-0.5"></i>
+                <div>
+                  <strong>Musyawarah Dusun (Musdus):</strong> Mengadakan serap aspirasi warga secara berkala di tiap dusun untuk bahan rancangan prioritas RKPDesa.
+                </div>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Tab 3: PKK -->
+          <div id="inst-content-pkk" class="panel p-5 bg-white rounded-xl shadow-sm border border-black/5 inst-content-panel hidden">
+            <div class="flex items-center justify-between border-b border-gray-100 pb-3 mb-4">
+              <div>
+                <h3 class="text-lg font-bold text-gray-800">Pemberdayaan Kesejahteraan Keluarga (PKK)</h3>
+                <p class="text-xs text-gray-500">Gerakan Pembangunan Masyarakat untuk Kesejahteraan Keluarga</p>
+              </div>
+              <span class="bg-pink-100 text-pink-700 px-3 py-1 rounded-full text-xs font-semibold">Aktif</span>
+            </div>
+
+            <p class="text-sm text-gray-600 mb-6 leading-relaxed">
+              PKK Desa Remau Bako Tuo berperan aktif dalam program posyandu, pencegahan stunting, keterampilan kerajinan tangan wanita, penyuluhan kesehatan, serta ketahanan pangan keluarga melalui program taman obat keluarga (TOGA) dan halaman asri teratur indah nyaman (HATINYA PKK).
+            </p>
+
+            <h4 class="text-sm font-semibold text-gray-700 mb-3"><i class="fas fa-female text-pink-500 mr-2"></i>Tokoh Penggerak PKK</h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              <div class="p-4 bg-gray-50 rounded-xl border border-gray-100 flex items-center gap-3">
+                <div class="w-12 h-12 bg-pink-100 text-pink-700 rounded-full flex items-center justify-center text-lg font-bold">H</div>
+                <div>
+                  <h5 class="text-sm font-bold text-gray-800">Ny. Hj. Fatimah Herman</h5>
+                  <p class="text-xs text-pink-700 font-semibold mb-0.5">Ketua Tim Penggerak PKK</p>
+                  <p class="text-[10px] text-gray-400">Koordinator Utama 10 Program Pokok</p>
+                </div>
+              </div>
+              <div class="p-4 bg-gray-50 rounded-xl border border-gray-100 flex items-center gap-3">
+                <div class="w-12 h-12 bg-rose-100 text-rose-700 rounded-full flex items-center justify-center text-lg font-bold">R</div>
+                <div>
+                  <h5 class="text-sm font-bold text-gray-800">dr. Rina Amalia</h5>
+                  <p class="text-xs text-rose-700 font-semibold mb-0.5">Sekretaris & Ketua Pokja IV (Kesehatan)</p>
+                  <p class="text-[10px] text-gray-400">Penanggung Jawab Program Bebas Stunting</p>
+                </div>
+              </div>
+            </div>
+
+            <h4 class="text-sm font-semibold text-gray-700 mb-3"><i class="fas fa-heart text-pink-500 mr-2"></i>Program Kerja Unggulan</h4>
+            <div class="space-y-3 text-xs text-gray-600">
+              <div class="border-l-4 border-pink-400 pl-3">
+                <h5 class="font-bold text-gray-800">Posyandu Balita & Lansia Terintegrasi</h5>
+                <p class="mt-0.5 text-gray-500">Dilaksanakan setiap tanggal 10 bulan berjalan, menyediakan timbang balita, imunisasi, PMT (Pemberian Makanan Tambahan) sehat, serta cek kesehatan lansia gratis.</p>
+              </div>
+              <div class="border-l-4 border-pink-400 pl-3">
+                <h5 class="font-bold text-gray-800">Kelompok Wanita Tani (KWT) "Mekar Sari"</h5>
+                <p class="mt-0.5 text-gray-500">Pelatihan hidroponik dan pemanfaatan pekarangan rumah untuk sayuran organik keluarga demi menekan laju inflasi pangan skala rumah tangga.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tab 4: Karang Taruna -->
+          <div id="inst-content-karang-taruna" class="panel p-5 bg-white rounded-xl shadow-sm border border-black/5 inst-content-panel hidden">
+            <div class="flex items-center justify-between border-b border-gray-100 pb-3 mb-4">
+              <div>
+                <h3 class="text-lg font-bold text-gray-800">Karang Taruna "Karya Bakti"</h3>
+                <p class="text-xs text-gray-500">Wadah Pengembangan Generasi Muda Desa</p>
+              </div>
+              <span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-semibold">Aktif</span>
+            </div>
+
+            <p class="text-sm text-gray-600 mb-6 leading-relaxed">
+              Karang Taruna adalah organisasi sosial wadah pengembangan generasi muda yang tumbuh dan berkembang atas dasar kesadaran dan tanggung jawab sosial dari, oleh dan untuk masyarakat khususnya generasi muda di wilayah desa.
+            </p>
+
+            <h4 class="text-sm font-semibold text-gray-700 mb-3"><i class="fas fa-user-friends text-blue-500 mr-2"></i>Pimpinan Karang Taruna</h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              <div class="p-4 bg-gray-50 rounded-xl border border-gray-100 flex items-center gap-3">
+                <div class="w-12 h-12 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center text-lg font-bold">R</div>
+                <div>
+                  <h5 class="text-sm font-bold text-gray-800">Rizky Pratama, S.Kom</h5>
+                  <p class="text-xs text-blue-700 font-semibold mb-0.5">Ketua Karang Taruna</p>
+                  <p class="text-[10px] text-gray-400">Penggerak Kreativitas & Digital Pemuda</p>
+                </div>
+              </div>
+              <div class="p-4 bg-gray-50 rounded-xl border border-gray-100 flex items-center gap-3">
+                <div class="w-12 h-12 bg-cyan-100 text-cyan-700 rounded-full flex items-center justify-center text-lg font-bold">F</div>
+                <div>
+                  <h5 class="text-sm font-bold text-gray-800">Fandi Ahmad</h5>
+                  <p class="text-xs text-cyan-700 font-semibold mb-0.5">Koordinator Olahraga & Seni</p>
+                  <p class="text-[10px] text-gray-400">Penanggung Jawab Turnamen Tahunan</p>
+                </div>
+              </div>
+            </div>
+
+            <h4 class="text-sm font-semibold text-gray-700 mb-3"><i class="fas fa-trophy text-amber-500 mr-2"></i>Kegiatan & Prestasi Terbaru</h4>
+            <div class="space-y-3 text-xs text-gray-600">
+              <div class="p-3 bg-gray-50 rounded-lg">
+                <h5 class="font-bold text-gray-800"><i class="fas fa-futbol mr-1 text-blue-500"></i> Turnamen Sepak Bola Kades Cup</h5>
+                <p class="mt-1 text-gray-500">Sukses menyelenggarakan turnamen antar dusun yang dihadiri ratusan penonton dan merangsang ekonomi UMKM sekitar lapangan desa.</p>
+              </div>
+              <div class="p-3 bg-gray-50 rounded-lg">
+                <h5 class="font-bold text-gray-800"><i class="fas fa-palette mr-1 text-purple-500"></i> Pelatihan Desain Grafis & Pembuatan Konten</h5>
+                <p class="mt-1 text-gray-500">Memberikan skill digital untuk 25 pemuda desa agar dapat membuka jasa kreatif mandiri dan mempromosikan pariwisata desa secara online.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tab 5: LPM / Lembaga Adat -->
+          <div id="inst-content-lpm" class="panel p-5 bg-white rounded-xl shadow-sm border border-black/5 inst-content-panel hidden">
+            <div class="flex items-center justify-between border-b border-gray-100 pb-3 mb-4">
+              <div>
+                <h3 class="text-lg font-bold text-gray-800">LPM & Lembaga Adat Melayu</h3>
+                <p class="text-xs text-gray-500">Lembaga Pemberdayaan Masyarakat dan Penjaga Budaya Tradisional</p>
+              </div>
+              <span class="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-xs font-semibold">Aktif</span>
+            </div>
+
+            <p class="text-sm text-gray-600 mb-6 leading-relaxed">
+              Lembaga Pemberdayaan Masyarakat (LPM) membantu pemerintah desa dalam merencanakan pembangunan partisipatif dan menggerakkan swadaya gotong royong warga. Sementara Lembaga Adat Melayu Desa berperan menjaga nilai, adat-istiadat luhur, menyelesaikan konflik sosial secara kekeluargaan, serta membina kehidupan berbudaya masyarakat.
+            </p>
+
+            <h4 class="text-sm font-semibold text-gray-700 mb-3"><i class="fas fa-user-graduate text-purple-500 mr-2"></i>Ketua Lembaga</h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              <div class="p-4 bg-gray-50 rounded-xl border border-gray-100 flex items-center gap-3">
+                <div class="w-12 h-12 bg-purple-100 text-purple-700 rounded-full flex items-center justify-center text-lg font-bold">D</div>
+                <div>
+                  <h5 class="text-sm font-bold text-gray-800">Drs. H. M. Jamil</h5>
+                  <p class="text-xs text-purple-700 font-semibold mb-0.5">Ketua LPM</p>
+                  <p class="text-[10px] text-gray-400">Koordinator Swadaya Pembangunan</p>
+                </div>
+              </div>
+              <div class="p-4 bg-gray-50 rounded-xl border border-gray-100 flex items-center gap-3">
+                <div class="w-12 h-12 bg-amber-100 text-amber-700 rounded-full flex items-center justify-center text-lg font-bold">A</div>
+                <div>
+                  <h5 class="text-sm font-bold text-gray-800">Datuk Penghulu M. Rasyid</h5>
+                  <p class="text-xs text-amber-700 font-semibold mb-0.5">Ketua Lembaga Adat Melayu</p>
+                  <p class="text-[10px] text-gray-400">Pemberi Pertimbangan Adat & Budaya</p>
+                </div>
+              </div>
+            </div>
+
+            <h4 class="text-sm font-semibold text-gray-700 mb-3"><i class="fas fa-hands-helping text-amber-600 mr-2"></i>Fokus Program & Swadaya</h4>
+            <div class="space-y-3 text-xs text-gray-600">
+              <div class="flex items-start gap-3">
+                <div class="w-2 h-2 rounded-full bg-purple-500 mt-1.5 flex-shrink-0"></div>
+                <div>
+                  <strong>Gotong Royong Bersih Lingkungan:</strong> Agenda rutin setiap hari Minggu pertama untuk membersihkan drainase desa, facilities ibadah, serta penataan makam umum.
+                </div>
+              </div>
+              <div class="flex items-start gap-3">
+                <div class="w-2 h-2 rounded-full bg-purple-500 mt-1.5 flex-shrink-0"></div>
+                <div>
+                  <strong>Suku dan Seni Tradisional Melayu:</strong> Pelatihan tari persembahan dan musik kompang tradisional bagi anak-anak sekolah desa untuk melestarikan kebudayaan Melayu Jambi.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tab 6: BUMDes -->
+          <div id="inst-content-bumdes" class="panel p-5 bg-white rounded-xl shadow-sm border border-black/5 inst-content-panel hidden">
+            <div class="flex items-center justify-between border-b border-gray-100 pb-3 mb-4">
+              <div>
+                <h3 class="text-lg font-bold text-gray-800">BUMDesa "Bako Mandiri"</h3>
+                <p class="text-xs text-gray-500">Badan Usaha Milik Desa - Pilar Ekonomi Desa</p>
+              </div>
+              <span class="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-xs font-semibold">Aktif & Berdaya</span>
+            </div>
+
+            <p class="text-sm text-gray-600 mb-6 leading-relaxed">
+              BUMDesa "Bako Mandiri" didirikan untuk mengoptimalkan potensi aset desa, meningkatkan perekonomian warga, serta menyumbangkan Pendapatan Asli Desa (PADes). Mengelola beberapa unit usaha strategis yang melayani kebutuhan warga desa.
+            </p>
+
+            <h4 class="text-sm font-semibold text-gray-700 mb-3"><i class="fas fa-coins text-emerald-500 mr-2"></i>Kinerja & Manajemen BUMDes</h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              <div class="p-4 bg-gray-50 rounded-xl border border-gray-100 flex items-center gap-3">
+                <div class="w-12 h-12 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center text-lg font-bold">M</div>
+                <div>
+                  <h5 class="text-sm font-bold text-gray-800">Mulya Syahputra, S.Ak</h5>
+                  <p class="text-xs text-emerald-700 font-semibold mb-0.5">Direktur Utama BUMDes</p>
+                  <p class="text-[10px] text-gray-400">Pengalaman Manajemen Keuangan</p>
+                </div>
+              </div>
+              <div class="p-4 bg-gray-50 rounded-xl border border-gray-100 flex items-center gap-3">
+                <div class="w-12 h-12 bg-yellow-100 text-yellow-700 rounded-full flex items-center justify-center text-lg font-bold">K</div>
+                <div>
+                  <h5 class="text-sm font-bold text-gray-800">Unit Saprotan & Agen Air</h5>
+                  <p class="text-xs text-yellow-700 font-semibold mb-0.5">Penyedia Pupuk & PPOB</p>
+                  <p class="text-[10px] text-gray-400">Layanan Pembayaran Listrik & Pulsa Desa</p>
+                </div>
+              </div>
+            </div>
+
+            <h4 class="text-sm font-semibold text-gray-700 mb-3"><i class="fas fa-chart-line text-emerald-600 mr-2"></i>Kinerja Unit Usaha BUMDes</h4>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs text-gray-600 border-collapse">
+                <thead>
+                  <tr class="bg-gray-50 border-b border-gray-200">
+                    <th class="p-2 font-bold text-gray-700">Nama Unit Usaha</th>
+                    <th class="p-2 font-bold text-gray-700">Layanan / Produk</th>
+                    <th class="p-2 font-bold text-gray-700 text-right">Kontribusi Omset (2025)</th>
+                    <th class="p-2 font-bold text-gray-700 text-center">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="border-b border-gray-100 hover:bg-gray-50">
+                    <td class="p-2 font-medium text-gray-800">Unit Saprotan (Sarana Produksi Pertanian)</td>
+                    <td class="p-2">Pupuk bersubsidi, herbisida, bibit unggul</td>
+                    <td class="p-2 text-right">Rp 45.000.000</td>
+                    <td class="p-2 text-center"><span class="bg-green-100 text-green-700 px-2 py-0.5 rounded text-[10px] font-semibold">Sangat Sehat</span></td>
+                  </tr>
+                  <tr class="border-b border-gray-100 hover:bg-gray-50">
+                    <td class="p-2 font-medium text-gray-800">Agen Token & Pembayaran Listrik (PPOB)</td>
+                    <td class="p-2">Pulsa, token PLN, bayar PDAM, transfer dana</td>
+                    <td class="p-2 text-right">Rp 12.500.000</td>
+                    <td class="p-2 text-center"><span class="bg-green-100 text-green-700 px-2 py-0.5 rounded text-[10px] font-semibold">Sehat</span></td>
+                  </tr>
+                  <tr class="hover:bg-gray-50">
+                    <td class="p-2 font-medium text-gray-800">Unit Air Bersih Desa (PAMDes)</td>
+                    <td class="p-2">Penyaluran air bersih dusun rawan payau</td>
+                    <td class="p-2 text-right">Rp 18.000.000</td>
+                    <td class="p-2 text-center"><span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-[10px] font-semibold">Uji Coba</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
 `;
 
 export default function DashboardClient() {
